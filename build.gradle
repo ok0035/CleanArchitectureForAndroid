@@ -3,13 +3,7 @@ buildscript {
 
     ext {
         hilt_ver = "2.42"
-        kotlin_ver = "1.8.0"
-        fragment_ktx_ver = "1.4.1"
-        retrofit_ver = "2.9.0"
-        lottie_ver = "3.4.0"
-        gson_ver = "2.9.0"
-        glide_ver = "4.13.2"
-        okhttp_ver = "4.10.0"
+
     }
 
     dependencies {

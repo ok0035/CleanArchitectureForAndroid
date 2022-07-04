@@ -29,7 +29,7 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        homeViewModel.getGithubRepositories("ok0035")
+//        homeViewModel.getGithubRepositories("ok0035")
 
         return root
     }
