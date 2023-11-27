@@ -13,7 +13,7 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "CleanArchitecture"
-include(":App")
+include(":app")
 include(":domain")
 include(":data")
 include(":feature-main")
