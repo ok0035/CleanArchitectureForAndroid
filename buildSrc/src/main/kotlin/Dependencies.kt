@@ -24,7 +24,7 @@ object Versions {
     const val MARTERIAL = "1.6.1"
     const val CONSTRAINT_LAYOUT = "2.1.4"
     const val HILT_VER = "2.42"
-    const val CORE_KTX_VER = "1.8.0"
+    const val CORE_KTX_VER = "1.9.0"
     const val FRAGMENT_KTX_VER = "1.4.1"
     const val RETROFIT_VER = "2.9.0"
     const val LOTTIE_VER = "3.4.0"
@@ -64,6 +64,10 @@ object Libraries {
     object Hilt {
         const val ANDROID = "com.google.dagger:hilt-android:${Versions.HILT_VER}"
         const val COMPILER_KAPT = "com.google.dagger:hilt-compiler:${Versions.HILT_VER}"
+    }
+
+    object Compose {
+        const val COMPOSE = "androidx.activity:activity-compose:1.7.0"
     }
 
     object Lottie {
