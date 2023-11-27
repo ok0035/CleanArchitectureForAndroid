@@ -37,13 +37,14 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    namespace = "com.zerodeg.cleanarchitecture"
 }
 
 dependencies {
 
-    implementation(project(":presentation"))
     implementation(project(":data"))
     implementation(project(":domain"))
+    implementation(project(":feature-main"))
 
     implementation(Libraries.AndroidX.APP_COMPAT)
     implementation(Libraries.AndroidX.MARTERIAL)
