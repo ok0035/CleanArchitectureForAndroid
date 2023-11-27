@@ -91,6 +91,10 @@ object Libraries {
         const val COMPILER_KAPT = "com.github.bumptech.glide:compiler:${Versions.GLIDE_VER}"
     }
 
+    object VideoUtil {
+        const val FFMPEG = "com.arthenica:ffmpeg-kit-full:6.0-2"
+    }
+
     object Test {
         const val JUNIT = "junit:junit:${Versions.JUNIT_VER}"
     }

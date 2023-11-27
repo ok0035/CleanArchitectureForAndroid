@@ -61,6 +61,8 @@ dependencies {
     implementation(Libraries.Compose.COMPOSE_UI_MATERIAL3)
     kapt(Libraries.Compose.COMPOSE_COMPILER)
 
+    implementation(Libraries.VideoUtil.FFMPEG)
+
     //hilt
     implementation(Libraries.Hilt.ANDROID)
     kapt(Libraries.Hilt.COMPILER_KAPT)
