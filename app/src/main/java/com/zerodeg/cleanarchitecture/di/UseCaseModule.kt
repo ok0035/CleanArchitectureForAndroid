@@ -1,6 +1,6 @@
 package com.zerodeg.cleanarchitecture.di
 
-import com.zerodeg.data.GithubRepository
+import com.zerodeg.domain.interfaces.GithubRepository
 import com.zerodeg.domain.repoimpls.GetGithubReposUseCase
 import dagger.Module
 import dagger.Provides

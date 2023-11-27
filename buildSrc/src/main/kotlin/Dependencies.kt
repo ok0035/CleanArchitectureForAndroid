@@ -1,29 +1,10 @@
 object Versions {
-    /*
-    buildscript {
 
-    ext {
-        hilt_ver = "2.42"
-        kotlin_ver = "1.8.0"
-        fragment_ktx_ver = "1.4.1"
-        retrofit_ver = "2.9.0"
-        lottie_ver = "3.4.0"
-        gson_ver = "2.9.0"
-        glide_ver = "4.13.2"
-        okhttp_ver = "4.10.0"
-    }
-
-    dependencies {
-        classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_ver"
-    }
-}
-     */
-
-    const val APP_COMPAT = "1.4.2"
+    const val APP_COMPAT = "1.6.1"
     const val COROUTINE = "1.3.9"
     const val MARTERIAL = "1.6.1"
     const val CONSTRAINT_LAYOUT = "2.1.4"
-    const val HILT_VER = "2.42"
+    const val HILT_VER = "2.48"
     const val CORE_KTX_VER = "1.9.0"
     const val FRAGMENT_KTX_VER = "1.4.1"
     const val RETROFIT_VER = "2.9.0"
@@ -31,11 +12,18 @@ object Versions {
     const val GSON_VER = "2.9.0"
     const val GLIDE_VER = "4.13.2"
     const val OK_HTTP_VER = "4.10.0"
-    const val NAV_VER = "2.4.2"
+    const val NAV_VER = "2.7.5"
     const val JUNIT_VER = "4.13.2"
-    const val AND_JUNIT_VER = "1.1.3"
-    const val ESPRESSO = "3.4.0"
+    const val AND_JUNIT_VER = "1.1.5"
+    const val ESPRESSO = "3.5.1"
 
+}
+
+object Modules {
+    const val CORE_DATA = ":data"
+    const val CORE_DOMAIN = ":domain"
+    const val FEATURE_MAIN = ":feature-main"
+    const val FEATURE_VIDEO = ":feature-video"
 }
 
 object Libraries {
@@ -44,6 +32,7 @@ object Libraries {
         const val APP_COMPAT = "androidx.appcompat:appcompat:${Versions.APP_COMPAT}"
         const val MARTERIAL = "com.google.android.material:material:${Versions.MARTERIAL}"
         const val CONSTRAINT_LAYOUT = "androidx.constraintlayout:constraintlayout:${Versions.CONSTRAINT_LAYOUT}"
+        const val LIFECYCLE_RUNTIME = "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
     }
 
     object KTX {
@@ -66,8 +55,21 @@ object Libraries {
         const val COMPILER_KAPT = "com.google.dagger:hilt-compiler:${Versions.HILT_VER}"
     }
 
+    object Material {
+        const val MATERIAL = "com.google.android.material:material:1.10.0"
+    }
+
     object Compose {
-        const val COMPOSE = "androidx.activity:activity-compose:1.7.0"
+        const val COMPOSE_ACTIVITY = "androidx.activity:activity-compose:1.8.1"
+        const val COMPOSE_BOM = "androidx.compose:compose-bom:2023.10.01"
+        const val COMPOSE_UI = "androidx.compose.ui:ui"
+        const val COMPOSE_UI_GRAPHICS = "androidx.compose.ui:ui-graphics"
+        const val COMPOSE_UI_TOOLING_PREVIEW = "androidx.compose.ui:ui-tooling-preview"
+        const val COMPOSE_UI_MATERIAL3 = "androidx.compose.material3:material3"
+        const val COMPOSE_ANDROID_TEST = "androidx.compose.ui:ui-test-junit4"
+        const val COMPOSE_DEBUG_UI_TOOLING = "androidx.compose.ui:ui-tooling"
+        const val COMPOSE_DEBUG_UI_TEST_MANIFEST = "androidx.compose.ui:ui-test-manifest"
+        const val COMPOSE_COMPILER = "androidx.compose.compiler:compiler:1.5.4"
     }
 
     object Lottie {

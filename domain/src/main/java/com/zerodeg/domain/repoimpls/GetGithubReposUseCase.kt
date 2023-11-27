@@ -1,7 +1,7 @@
 package com.zerodeg.domain.repoimpls
 
-import com.zerodeg.data.GithubRepo
-import com.zerodeg.data.GithubRepository
+import com.zerodeg.domain.interfaces.GithubRepo
+import com.zerodeg.domain.interfaces.GithubRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

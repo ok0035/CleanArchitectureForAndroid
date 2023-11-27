@@ -1,4 +1,5 @@
 plugins {
+    id("kotlin-kapt")
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
 }
@@ -27,17 +28,16 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    kapt {
+        correctErrorTypes = true
+    }
     namespace = "com.zerodeg.domain"
 }
 
 dependencies {
 
-    implementation(project(":data"))
-
     implementation(Libraries.KTX.CORE)
     implementation(Libraries.Coroutine.COROUTINE)
-    implementation(Libraries.AndroidX.APP_COMPAT)
-    implementation(Libraries.AndroidX.MARTERIAL)
     testImplementation(Libraries.Test.JUNIT)
     androidTestImplementation(Libraries.AndroidTest.ANDROID_JUNIT)
     androidTestImplementation(Libraries.AndroidTest.ESPRESSO)

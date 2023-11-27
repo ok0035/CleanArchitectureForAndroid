@@ -12,7 +12,7 @@ object AppConfig {
     }
     */
     const val appId = "com.zerodeg.cleanarchitecture"
-    const val minSdk = 25
+    const val minSdk = 26
     const val compileSdk = 34
     const val targetSdk = 34
     const val versionCode = 1

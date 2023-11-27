@@ -1,7 +1,6 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("dagger.hilt.android.plugin")
     id("kotlin-kapt")
 }
 
@@ -28,22 +27,30 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    kapt {
+        correctErrorTypes = true
+    }
     namespace = "com.zerodeg.data"
 }
 
 dependencies {
 
+    implementation(project(Modules.CORE_DOMAIN))
+    implementation(Libraries.KTX.CORE)
+
     //retrofit
     implementation(Libraries.Retrofit.RETROFIT)
     implementation(Libraries.Retrofit.GSON)
+
+    //okhttp
+    implementation(Libraries.OkHttp.OKHTTP)
+    implementation(Libraries.OkHttp.INTERCEPTER)
 
     //hilt
     implementation(Libraries.Hilt.ANDROID)
     kapt(Libraries.Hilt.COMPILER_KAPT)
 
-    implementation(Libraries.KTX.CORE)
-    implementation(Libraries.AndroidX.APP_COMPAT)
-    implementation(Libraries.AndroidX.MARTERIAL)
     testImplementation(Libraries.Test.JUNIT)
     androidTestImplementation(Libraries.AndroidTest.ANDROID_JUNIT)
     androidTestImplementation(Libraries.AndroidTest.ESPRESSO)

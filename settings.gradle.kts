@@ -14,7 +14,8 @@ dependencyResolutionManagement {
 }
 rootProject.name = "CleanArchitecture"
 include(":app")
+include(":app-video-editor")
+include(":feature-main")
+include(":feature-video")
 include(":domain")
 include(":data")
-include(":feature-main")
-include(":app-video-editor")

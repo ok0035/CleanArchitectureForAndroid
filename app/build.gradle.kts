@@ -1,11 +1,12 @@
 plugins {
+    id("kotlin-kapt")
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("dagger.hilt.android.plugin")
-    id("kotlin-kapt")
 }
 
 android {
+    namespace = "com.zerodeg.cleanarchitecture"
     compileSdk = AppConfig.compileSdk
 
     defaultConfig {
@@ -21,7 +22,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -37,47 +41,35 @@ android {
     buildFeatures {
         viewBinding = true
     }
-    namespace = "com.zerodeg.cleanarchitecture"
+    kapt {
+        correctErrorTypes = true
+    }
+
 }
 
 dependencies {
 
-    implementation(project(":data"))
-    implementation(project(":domain"))
-    implementation(project(":feature-main"))
-
-    implementation(Libraries.AndroidX.APP_COMPAT)
-    implementation(Libraries.AndroidX.MARTERIAL)
-    implementation(Libraries.AndroidX.CONSTRAINT_LAYOUT)
+    implementation(project(Modules.CORE_DATA))
+    implementation(project(Modules.CORE_DOMAIN))
+    implementation(project(Modules.FEATURE_MAIN))
 
     //kotlin
     implementation(Libraries.KTX.CORE)
 
+    implementation(Libraries.AndroidX.APP_COMPAT)
+//    implementation(Libraries.AndroidX.MARTERIAL)
+//    implementation(Libraries.AndroidX.CONSTRAINT_LAYOUT)
+
+
     //LifeCycle
-    implementation(Libraries.KTX.FRAGMENT)
+//    implementation(Libraries.KTX.FRAGMENT)
 
     //hilt
     implementation(Libraries.Hilt.ANDROID)
     kapt(Libraries.Hilt.COMPILER_KAPT)
 
-    //retrofit
-    implementation(Libraries.Retrofit.RETROFIT)
-    implementation(Libraries.Retrofit.GSON)
-
-    //okhttp
-    implementation(Libraries.OkHttp.OKHTTP)
-    implementation(Libraries.OkHttp.INTERCEPTER)
-
-    //lottie
-    implementation(Libraries.Lottie.LOTTIE)
-
-    //glide
-    implementation(Libraries.Glide.GLIDE)
-    kapt(Libraries.Glide.COMPILER_KAPT)
-
-    implementation (Libraries.Navigation.SAFE_ARGS_GRADLE_PLUGIN)
-    implementation (Libraries.Navigation.FRAGMENT_KTX)
-    implementation (Libraries.Navigation.UI_KTX)
+    implementation(Libraries.Navigation.FRAGMENT_KTX)
+    implementation(Libraries.Navigation.UI_KTX)
 
     testImplementation(Libraries.Test.JUNIT)
     androidTestImplementation(Libraries.AndroidTest.ANDROID_JUNIT)

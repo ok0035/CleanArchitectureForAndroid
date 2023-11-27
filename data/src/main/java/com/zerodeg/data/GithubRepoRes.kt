@@ -1,6 +1,7 @@
 package com.zerodeg.data
 
 import com.google.gson.annotations.SerializedName
+import com.zerodeg.domain.interfaces.GithubRepo
 
 data class GithubRepoRes(
     @SerializedName("name")

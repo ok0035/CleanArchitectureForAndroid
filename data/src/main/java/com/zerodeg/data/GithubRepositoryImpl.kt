@@ -1,5 +1,7 @@
 package com.zerodeg.data
 
+import com.zerodeg.domain.interfaces.GithubRepo
+import com.zerodeg.domain.interfaces.GithubRepository
 import javax.inject.Inject
 
 class GithubRepositoryImpl @Inject constructor(
