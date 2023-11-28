@@ -67,11 +67,12 @@ object Libraries {
         const val COMPOSE_UI_GRAPHICS = "androidx.compose.ui:ui-graphics"
         const val COMPOSE_UI_TOOLING_PREVIEW = "androidx.compose.ui:ui-tooling-preview"
         const val COMPOSE_UI_MATERIAL3 = "androidx.compose.material3:material3"
+        const val COMPOSE_UI_CONSTRAINTS = "androidx.constraintlayout:constraintlayout-compose:1.0.1"
         const val COMPOSE_ANDROID_TEST = "androidx.compose.ui:ui-test-junit4"
         const val COMPOSE_DEBUG_UI_TOOLING = "androidx.compose.ui:ui-tooling"
         const val COMPOSE_DEBUG_UI_TEST_MANIFEST = "androidx.compose.ui:ui-test-manifest"
         const val COMPOSE_COMPILER = "androidx.compose.compiler:compiler:1.5.4"
-        const val COMPOSE_RUNTIME = "androidx.compose.runtime:runtime-*:1.5.4"
+        const val COMPOSE_RUNTIME = "androidx.compose.runtime:runtime:1.5.4"
     }
 
     object Lottie {

@@ -1,22 +1,17 @@
 package com.zerodeg.app_video_editor.views.main
 
 import android.Manifest
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.zerodeg.app_video_editor.ui.theme.CleanArchitectureTheme
+import com.zerodeg.feature_video.views.MainScreen
 import com.zerodeg.util.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -31,18 +26,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CleanArchitectureTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
-                }
+                MainScreen()
             }
         }
-
         setPermission()
-
     }
 
     private fun setPermission() {
@@ -122,21 +109,5 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE // Android10 이상에서는 필요하지 않음
             )
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    CleanArchitectureTheme {
-        Greeting("Android")
     }
 }

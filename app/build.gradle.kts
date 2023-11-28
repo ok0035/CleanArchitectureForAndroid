@@ -55,14 +55,7 @@ dependencies {
 
     //kotlin
     implementation(Libraries.KTX.CORE)
-
     implementation(Libraries.AndroidX.APP_COMPAT)
-//    implementation(Libraries.AndroidX.MARTERIAL)
-//    implementation(Libraries.AndroidX.CONSTRAINT_LAYOUT)
-
-
-    //LifeCycle
-//    implementation(Libraries.KTX.FRAGMENT)
 
     //hilt
     implementation(Libraries.Hilt.ANDROID)
