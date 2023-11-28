@@ -64,6 +64,8 @@ dependencies {
     implementation(Libraries.KTX.CORE)
     implementation(Libraries.AndroidX.LIFECYCLE_RUNTIME)
     implementation(Libraries.Compose.COMPOSE_ACTIVITY)
+    implementation(Libraries.AndroidX.APP_COMPAT)
+
     implementation(platform(Libraries.Compose.COMPOSE_BOM))
     implementation(Libraries.Compose.COMPOSE_UI)
     implementation(Libraries.Compose.COMPOSE_UI_GRAPHICS)

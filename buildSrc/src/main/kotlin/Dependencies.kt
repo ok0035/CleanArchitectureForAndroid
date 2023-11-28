@@ -33,6 +33,7 @@ object Libraries {
         const val MARTERIAL = "com.google.android.material:material:${Versions.MARTERIAL}"
         const val CONSTRAINT_LAYOUT = "androidx.constraintlayout:constraintlayout:${Versions.CONSTRAINT_LAYOUT}"
         const val LIFECYCLE_RUNTIME = "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2"
+        const val DOCUMENT_FILE = "androidx.documentfile:documentfile:1.0.1"
     }
 
     object KTX {
@@ -70,6 +71,7 @@ object Libraries {
         const val COMPOSE_DEBUG_UI_TOOLING = "androidx.compose.ui:ui-tooling"
         const val COMPOSE_DEBUG_UI_TEST_MANIFEST = "androidx.compose.ui:ui-test-manifest"
         const val COMPOSE_COMPILER = "androidx.compose.compiler:compiler:1.5.4"
+        const val COMPOSE_RUNTIME = "androidx.compose.runtime:runtime-*:1.5.4"
     }
 
     object Lottie {

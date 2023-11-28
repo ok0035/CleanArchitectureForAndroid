@@ -1,7 +1,7 @@
-package com.zerodeg.cleanarchitecture
+package com.zerodeg.app_video_editor.di
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class App: Application()
+class HiltApp: Application()

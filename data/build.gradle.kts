@@ -39,6 +39,9 @@ dependencies {
     implementation(project(Modules.CORE_DOMAIN))
     implementation(Libraries.KTX.CORE)
 
+    implementation(Libraries.AndroidX.APP_COMPAT)
+    implementation(Libraries.AndroidX.DOCUMENT_FILE)
+
     //retrofit
     implementation(Libraries.Retrofit.RETROFIT)
     implementation(Libraries.Retrofit.GSON)
