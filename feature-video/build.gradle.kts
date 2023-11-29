@@ -68,6 +68,7 @@ dependencies {
     implementation(Libraries.Compose.COMPOSE_UI_TOOLING_PREVIEW)
     implementation(Libraries.Compose.COMPOSE_UI_MATERIAL3)
     implementation(Libraries.Compose.COMPOSE_UI_CONSTRAINTS)
+    implementation(Libraries.Compose.COMPOSE_HILT_NAVIGATION)
     implementation(Libraries.Compose.COMPOSE_RUNTIME)
     kapt(Libraries.Compose.COMPOSE_COMPILER)
 
