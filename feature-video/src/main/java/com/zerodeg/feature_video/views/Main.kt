@@ -16,14 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
 
 @Preview
 @Composable
 fun MainScreen() {
 
-    val viewModel: VideoEditorViewModel = viewModel()
+    val viewModel: VideoEditorViewModel = hiltViewModel()
     val context = LocalContext.current
     var videoUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -35,8 +35,8 @@ fun MainScreen() {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        VideoFrameImage(videoUri = videoUri, viewModel)
-        VideoFrameSelector(viewModel)
+        VideoFrameImage(videoUri = videoUri)
+        VideoFrameSelector()
         GalleryVideoPicker(onVideoPicked = { uri ->
             videoUri = uri
             uri?.let {

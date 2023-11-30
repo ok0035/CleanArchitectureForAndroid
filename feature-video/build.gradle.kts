@@ -60,7 +60,7 @@ dependencies {
     implementation(Libraries.AndroidX.MARTERIAL)
     implementation(Libraries.AndroidX.CONSTRAINT_LAYOUT)
 
-
+    //Compose
     implementation(Libraries.Compose.COMPOSE_ACTIVITY)
     implementation(platform(Libraries.Compose.COMPOSE_BOM))
     implementation(Libraries.Compose.COMPOSE_UI)
@@ -72,8 +72,16 @@ dependencies {
     implementation(Libraries.Compose.COMPOSE_RUNTIME)
     kapt(Libraries.Compose.COMPOSE_COMPILER)
 
+    //Video
     implementation(Libraries.VideoUtil.FFMPEG)
 
+    //Media
+    implementation(Libraries.Media3.MEDIA3)
+    implementation(Libraries.Media3.MEDIA3_UI)
+    implementation(Libraries.Media3.MEDIA3_HLS)
+    implementation(Libraries.Media3.MEDIA3_RTSP)
+    implementation(Libraries.Media3.MEDIA3_DASH)
+    implementation(Libraries.Media3.MEDIA3_IMA)
     //hilt
     implementation(Libraries.Hilt.ANDROID)
     kapt(Libraries.Hilt.COMPILER_KAPT)

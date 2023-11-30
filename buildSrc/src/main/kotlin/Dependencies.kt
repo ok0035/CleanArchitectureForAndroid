@@ -95,6 +95,22 @@ object Libraries {
         const val COMPILER_KAPT = "com.github.bumptech.glide:compiler:${Versions.GLIDE_VER}"
     }
 
+    object Media3 {
+        const val media3_version = "1.0.0-rc01"
+
+        const val MEDIA3 = "androidx.media3:media3-exoplayer:$media3_version"
+        // For DASH playback support with ExoPlayer
+        const val MEDIA3_DASH = "androidx.media3:media3-exoplayer-dash:$media3_version"
+        // For HLS playback support with ExoPlayer
+        const val MEDIA3_HLS = "androidx.media3:media3-exoplayer-hls:$media3_version"
+        // For RTSP playback support with ExoPlayer
+        const val MEDIA3_RTSP = "androidx.media3:media3-exoplayer-rtsp:$media3_version"
+        // For ad insertion using the Interactive Media Ads SDK with ExoPlayer
+        const val MEDIA3_IMA = "androidx.media3:media3-exoplayer-ima:$media3_version"
+        // For building media playback UIs
+        const val MEDIA3_UI = "androidx.media3:media3-ui:$media3_version"
+    }
+
     object VideoUtil {
         const val FFMPEG = "com.arthenica:ffmpeg-kit-full:6.0-2"
     }

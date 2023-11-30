@@ -2,7 +2,10 @@ package com.zerodeg.feature_video.views
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.provider.MediaStore.Video
 import android.util.Log
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.widget.FrameLayout
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -27,7 +30,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,11 +43,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.Util
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultDataSourceFactory
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
+import com.zerodeg.feature_video.R
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
 import kotlin.math.abs
 
 @Composable
-fun VideoFrameSelector(viewModel: VideoEditorViewModel) {
+fun VideoFrameSelector() {
+
+    val viewModel: VideoEditorViewModel = hiltViewModel()
 
     Box(
         modifier = Modifier
@@ -94,7 +116,9 @@ fun VideoFrameSelector(viewModel: VideoEditorViewModel) {
                                     viewModel.videoState.end - viewModel.videoState.start
 
 
-                                val newTime = (viewModel.videoState.totalTime / maxWidth.value * viewModel.videoState.start.value).toInt()
+                                val newTime =
+                                    (viewModel.videoState.totalTime / maxWidth.value * viewModel.videoState.start.value)
+                                        .toInt()
                                         .coerceIn(0, viewModel.videoState.totalTime - 1)
 
                                 if (abs(viewModel.videoState.selectedStartTime - newTime) > 0.25)
@@ -133,8 +157,10 @@ fun VideoFrameSelector(viewModel: VideoEditorViewModel) {
                                     viewModel.videoState.end - viewModel.videoState.start
 
 
-                                val newTime = (viewModel.videoState.totalTime / maxWidth.value * viewModel.videoState.end.value).toInt()
-                                    .coerceIn(0, viewModel.videoState.totalTime - 1)
+                                val newTime =
+                                    (viewModel.videoState.totalTime / maxWidth.value * viewModel.videoState.end.value)
+                                        .toInt()
+                                        .coerceIn(0, viewModel.videoState.totalTime - 1)
 
                                 if (abs(viewModel.videoState.selectedEndTime - newTime) > 0.25)
                                     viewModel.updateSelectedEndTime(newTime)
@@ -148,6 +174,47 @@ fun VideoFrameSelector(viewModel: VideoEditorViewModel) {
                 )
             }
         }
+    }
+}
+@Composable
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+fun VideoPlayer(uri: Uri) {
+    val context = LocalContext.current
+
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context)
+            .build()
+            .apply {
+                val defaultDataSourceFactory = DefaultDataSource.Factory(context)
+                val dataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(
+                    context,
+                    defaultDataSourceFactory
+                )
+                val source = ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(MediaItem.fromUri(uri))
+
+                setMediaSource(source)
+                prepare()
+            }
+    }
+
+    exoPlayer.playWhenReady = true
+    exoPlayer.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+    exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+
+    AndroidView(factory = {
+        PlayerView(context).apply {
+            hideController()
+            useController = false
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+
+            player = exoPlayer
+            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+        }
+    })
+
+    DisposableEffect(Unit) {
+        onDispose { exoPlayer.release() }
     }
 }
 
@@ -181,10 +248,10 @@ fun GalleryVideoPicker(onVideoPicked: (Uri?) -> Unit) {
 }
 
 @Composable
-fun VideoFrameImage(videoUri: Uri?, viewModel: VideoEditorViewModel) {
+fun VideoFrameImage(videoUri: Uri?) {
 //    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    val viewModel: VideoEditorViewModel = hiltViewModel()
     val context = LocalContext.current
-
     fun loadBitmap(videoUri: Uri?, time: Int) {
         videoUri?.let { uri ->
             val retriever = MediaMetadataRetriever()
