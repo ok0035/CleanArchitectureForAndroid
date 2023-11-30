@@ -15,6 +15,8 @@ class VideoState(
     totalTime: Int = 1,
     selectedStartTime: Int = 1,
     selectedEndTime: Int = 2,
+    selectedTime: Int = 1,
+    bitmaps: List<Bitmap>? = null,
     bitmap: Bitmap? = null
 ) {
     var start by mutableStateOf(initialStart)
@@ -23,5 +25,7 @@ class VideoState(
     var totalTime by mutableIntStateOf(totalTime) // mil
     var selectedStartTime by mutableIntStateOf(selectedStartTime)
     var selectedEndTime by mutableIntStateOf(selectedEndTime)
+    var selectedTime by mutableIntStateOf(selectedTime)
+    var bitmapList by mutableStateOf(bitmaps)
     var bitmap by mutableStateOf(bitmap)
 }

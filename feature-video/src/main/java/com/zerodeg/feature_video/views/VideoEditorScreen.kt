@@ -2,12 +2,12 @@ package com.zerodeg.feature_video.views
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.provider.MediaStore.Video
 import android.util.Log
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -36,28 +36,38 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.LinearGradient
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
-import androidx.media3.common.util.Util
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultDataSourceFactory
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.zerodeg.feature_video.R
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
 import kotlin.math.abs
 
@@ -65,6 +75,7 @@ import kotlin.math.abs
 fun VideoFrameSelector() {
 
     val viewModel: VideoEditorViewModel = hiltViewModel()
+    val dragSpace = 100
 
     Box(
         modifier = Modifier
@@ -121,7 +132,7 @@ fun VideoFrameSelector() {
                                         .toInt()
                                         .coerceIn(0, viewModel.videoState.totalTime - 1)
 
-                                if (abs(viewModel.videoState.selectedStartTime - newTime) > 0.25)
+                                if (abs(viewModel.videoState.selectedStartTime - newTime) > dragSpace)
                                     viewModel.updateSelectedStartTime(newTime)
 
                                 Log.d(
@@ -156,13 +167,12 @@ fun VideoFrameSelector() {
                                 viewModel.videoState.width =
                                     viewModel.videoState.end - viewModel.videoState.start
 
-
                                 val newTime =
                                     (viewModel.videoState.totalTime / maxWidth.value * viewModel.videoState.end.value)
                                         .toInt()
                                         .coerceIn(0, viewModel.videoState.totalTime - 1)
 
-                                if (abs(viewModel.videoState.selectedEndTime - newTime) > 0.25)
+                                if (abs(viewModel.videoState.selectedEndTime - newTime) > dragSpace)
                                     viewModel.updateSelectedEndTime(newTime)
 
                                 Log.d(
@@ -176,13 +186,35 @@ fun VideoFrameSelector() {
         }
     }
 }
+
 @Composable
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-fun VideoPlayer(uri: Uri) {
-    val context = LocalContext.current
+fun VideoPlayer(uri: Uri?) {
 
-    val exoPlayer = remember {
+    if (uri == null) return
+
+    val context = LocalContext.current
+    val viewModel: VideoEditorViewModel = hiltViewModel()
+
+    val exoPlayer = remember(uri) {
+
+        Log.d("EXO_PLAYER", "init exo player")
+
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                0, // 최소 버퍼링 시간 (15초)
+                0, // 최대 버퍼링 시간 (30초)
+                0,  // 재생을 위한 버퍼링 시간 (2.5초)
+                0   // 재버퍼링 후 재생을 위한 시간 (5초)
+            )
+            .setBackBuffer(0, true) // 백버퍼 길이 (10초), 재생 중에도 유지
+            .build()
+
+        val playbackSpeed = 1.0f
+
         ExoPlayer.Builder(context)
+            .setLoadControl(loadControl)
+            .setSeekParameters(SeekParameters.NEXT_SYNC)
             .build()
             .apply {
                 val defaultDataSourceFactory = DefaultDataSource.Factory(context)
@@ -193,25 +225,56 @@ fun VideoPlayer(uri: Uri) {
                 val source = ProgressiveMediaSource.Factory(dataSourceFactory)
                     .createMediaSource(MediaItem.fromUri(uri))
 
+                playWhenReady = false
+                videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                repeatMode = Player.REPEAT_MODE_ONE
+                playbackParameters = PlaybackParameters(playbackSpeed, 1.0f)
+
                 setMediaSource(source)
                 prepare()
+
             }
     }
 
-    exoPlayer.playWhenReady = true
-    exoPlayer.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
-    exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
 
-    AndroidView(factory = {
+    val playerView = remember {
         PlayerView(context).apply {
             hideController()
             useController = false
-            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT
             player = exoPlayer
             layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
         }
-    })
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .background(Color.Black)
+            .padding(start = 10.dp, end = 10.dp, bottom = 20.dp),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Box(
+            modifier = Modifier
+                .padding(top = 20.dp)
+                .height(300.dp)
+                .wrapContentWidth()
+                .clip(RoundedCornerShape(12.dp)) // 여기에 clip 적용
+                .background(Color.Black)
+        ) {
+            AndroidView(factory = {
+                playerView
+            })
+        }
+    }
+
+    LaunchedEffect(viewModel.videoState.selectedTime) {
+        val selectedTime = viewModel.videoState.selectedTime.toLong()
+        playerView.player?.seekTo(selectedTime)
+        Log.d("VIDEO", "SEEK TO $selectedTime")
+    }
 
     DisposableEffect(Unit) {
         onDispose { exoPlayer.release() }
@@ -249,30 +312,19 @@ fun GalleryVideoPicker(onVideoPicked: (Uri?) -> Unit) {
 
 @Composable
 fun VideoFrameImage(videoUri: Uri?) {
-//    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     val viewModel: VideoEditorViewModel = hiltViewModel()
     val context = LocalContext.current
-    fun loadBitmap(videoUri: Uri?, time: Int) {
-        videoUri?.let { uri ->
-            val retriever = MediaMetadataRetriever()
-            try {
-                retriever.setDataSource(context, uri)
-                val frameBitmap =
-                    retriever.getFrameAtTime(time * 1000L)
-                viewModel.videoState.bitmap = frameBitmap
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                retriever.release()
-            }
-        }
+
+    val retriever = MediaMetadataRetriever()
+    videoUri?.let { uri ->
+        retriever.setDataSource(context, uri)
     }
 
     LaunchedEffect(
         videoUri
     ) {
-        loadBitmap(
-            videoUri,
+        viewModel.loadBitmap(
+            retriever,
             1
         )
     }
@@ -280,8 +332,8 @@ fun VideoFrameImage(videoUri: Uri?) {
     LaunchedEffect(
         viewModel.videoState.selectedStartTime
     ) {
-        loadBitmap(
-            videoUri,
+        viewModel.loadBitmap(
+            retriever,
             viewModel.videoState.selectedStartTime
         )
     }
@@ -289,8 +341,8 @@ fun VideoFrameImage(videoUri: Uri?) {
     LaunchedEffect(
         viewModel.videoState.selectedEndTime
     ) {
-        loadBitmap(
-            videoUri,
+        viewModel.loadBitmap(
+            retriever,
             viewModel.videoState.selectedEndTime
         )
     }
@@ -322,6 +374,51 @@ fun VideoFrameImage(videoUri: Uri?) {
         }
     }
 
+}
+
+@Composable
+fun GradientText() {
+    Box(
+        modifier = Modifier
+            .wrapContentWidth()
+            .wrapContentHeight()
+            .padding(40.dp)
+    ) {
+        val text = "안녕하세요"
+        val fontSize = 30.sp
+        val colors = listOf(Color.Cyan, Color.Blue, Color.Cyan)
+//        val shaderBrush = ShaderBrush(LinearGradient(colors))
+
+        val paint = Paint().asFrameworkPaint().apply {
+            isAntiAlias = true
+            textSize = with(LocalDensity.current) { fontSize.toPx() }
+            typeface = android.graphics.Typeface.MONOSPACE
+        }
+
+        val textWidth = paint.measureText(text)
+        val shader = android.graphics.LinearGradient(
+            0f, 0f, textWidth, 0f,
+            colors.map { it.toArgb() }.toIntArray(),
+            null,
+            android.graphics.Shader.TileMode.CLAMP
+        )
+
+        paint.shader = shader
+
+        Canvas(
+            Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .align(Alignment.Center),
+        ) {
+            drawContext.canvas.nativeCanvas.drawText(
+                text,
+                0f,
+                size.height / 2,
+                paint
+            )
+        }
+    }
 }
 
 @Composable
