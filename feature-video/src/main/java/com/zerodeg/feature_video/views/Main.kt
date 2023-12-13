@@ -71,7 +71,7 @@ fun MainScreen() {
                 GalleryVideoPicker(onVideoPicked = { uri ->
                     uri?.let {
                         isLoading = true
-                        val path = viewModel.getRealPathFromURI(context, it) ?: return@let
+                        val path = viewModel.getRealPathFromURI(it) ?: return@let
                         val newPath = viewModel.getTempPath(Random.nextInt().toString() + ".mp4")
                         Log.d("ENCODING", "New path -> $newPath")
                         viewModel.encodeVideoWithKeyframeInterval(path, newPath) { encodedUri ->

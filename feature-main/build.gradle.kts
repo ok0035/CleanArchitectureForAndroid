@@ -24,8 +24,14 @@ android {
             )
         }
     }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.0"
+    }
+
     buildFeatures {
         viewBinding = true
+        compose = true
     }
 
     compileOptions {
@@ -46,38 +52,41 @@ dependencies {
     implementation(project(Modules.CORE_DATA))
     implementation(project(Modules.CORE_DOMAIN))
 
+    //kotlin
+    implementation(Libraries.KTX.CORE)
+    implementation(Libraries.KTX.FRAGMENT)
+
+    //LifeCycle
+    implementation(Libraries.AndroidX.LIFECYCLE_RUNTIME)
     implementation(Libraries.AndroidX.APP_COMPAT)
     implementation(Libraries.AndroidX.MARTERIAL)
     implementation(Libraries.AndroidX.CONSTRAINT_LAYOUT)
 
-    //kotlin
-    implementation(Libraries.KTX.CORE)
+    //Compose
+    implementation(Libraries.Compose.COMPOSE_ACTIVITY)
+    implementation(platform(Libraries.Compose.COMPOSE_BOM))
+    implementation(Libraries.Compose.COMPOSE_UI)
+    implementation(Libraries.Compose.COMPOSE_UI_GRAPHICS)
+    implementation(Libraries.Compose.COMPOSE_UI_TOOLING_PREVIEW)
+    implementation(Libraries.Compose.COMPOSE_UI_MATERIAL3)
+    implementation(Libraries.Compose.COMPOSE_UI_CONSTRAINTS)
+    implementation(Libraries.Compose.COMPOSE_HILT_NAVIGATION)
+    implementation(Libraries.Compose.COMPOSE_RUNTIME)
+    kapt(Libraries.Compose.COMPOSE_COMPILER)
 
-    //LifeCycle
-//    implementation(Libraries.KTX.FRAGMENT)
+    //Video
+    implementation(Libraries.VideoUtil.FFMPEG)
 
+    //Media
+    implementation(Libraries.Media3.MEDIA3)
+    implementation(Libraries.Media3.MEDIA3_UI)
+    implementation(Libraries.Media3.MEDIA3_HLS)
+    implementation(Libraries.Media3.MEDIA3_RTSP)
+    implementation(Libraries.Media3.MEDIA3_DASH)
+    implementation(Libraries.Media3.MEDIA3_IMA)
     //hilt
     implementation(Libraries.Hilt.ANDROID)
     kapt(Libraries.Hilt.COMPILER_KAPT)
-//
-//    //retrofit
-//    implementation(Libraries.Retrofit.RETROFIT)
-//    implementation(Libraries.Retrofit.GSON)
-//
-//    //okhttp
-//    implementation(Libraries.OkHttp.OKHTTP)
-//    implementation(Libraries.OkHttp.INTERCEPTER)
-
-//    //lottie
-//    implementation(Libraries.Lottie.LOTTIE)
-//
-//    //glide
-//    implementation(Libraries.Glide.GLIDE)
-//    kapt(Libraries.Glide.COMPILER_KAPT)
-//
-//    implementation (Libraries.Navigation.SAFE_ARGS_GRADLE_PLUGIN)
-//    implementation (Libraries.Navigation.FRAGMENT_KTX)
-//    implementation (Libraries.Navigation.UI_KTX)
 
     testImplementation(Libraries.Test.JUNIT)
     androidTestImplementation(Libraries.AndroidTest.ANDROID_JUNIT)

@@ -112,7 +112,7 @@ object Libraries {
     }
 
     object VideoUtil {
-        const val FFMPEG = "com.arthenica:ffmpeg-kit-full:6.0-2"
+        const val FFMPEG = "com.arthenica:ffmpeg-kit-full-gpl:6.0-2"
     }
 
     object Test {

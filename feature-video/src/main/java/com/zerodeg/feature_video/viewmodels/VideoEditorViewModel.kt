@@ -32,27 +32,6 @@ class VideoEditorViewModel @Inject constructor(
 
     private var isInitState = false
 
-    fun getRealPathFromURI(context: Context, contentUri: Uri): String? {
-        return try {
-            // 임시 파일 생성
-            val tempFile = File(context.cacheDir, "temp_video.mp4")
-            tempFile.createNewFile()
-
-            // Uri에서 InputStream을 얻고, 이를 임시 파일에 복사
-            context.contentResolver.openInputStream(contentUri)?.use { inputStream ->
-                FileOutputStream(tempFile).use { fileOutputStream ->
-                    inputStream.copyTo(fileOutputStream)
-                }
-            }
-
-            // 임시 파일의 경로 반환
-            tempFile.absolutePath
-        } catch (e: IOException) {
-            e.printStackTrace()
-            null
-        }
-    }
-
     fun updateVideoTotalTime(
         videoPath: String,
         onCompleteListener: ((totalTime: Long) -> Unit)? = null
@@ -153,8 +132,8 @@ class VideoEditorViewModel @Inject constructor(
         }
 
     fun encodeVideoWithKeyframeInterval(videoPath: String, outputPath: String, onCompletion: (uri: Uri) -> Unit) {
-        val cmd = "-i $videoPath -g 1 -c:v h264_mediacodec -preset ultrafast -b:v 5000k $outputPath"
-//        val cmd2 = "-i $videoPath -g 1 -c:v h264_mediacodec $outputPath"
+//        val cmd = "-i $videoPath -c:v libx264 -preset ultrafast -x264opts keyint=1:min-keyint=1 -b:v 5000k $outputPath"
+        val cmd = "-i $videoPath -g 1 -c:v libx264 $outputPath"
         FFmpegKit.executeAsync(cmd) { session ->
             if (session.returnCode.isValueSuccess) {
                 Log.d("FFmpegKit", "Encoding successful")
@@ -167,5 +146,7 @@ class VideoEditorViewModel @Inject constructor(
     }
 
     fun getTempPath(newName: String) = videoUtils.getTempFilePath(newName)
+    fun getRealPathFromURI(contentUri: Uri): String? = videoUtils.getRealPathFromURI(contentUri)
+
 
 }

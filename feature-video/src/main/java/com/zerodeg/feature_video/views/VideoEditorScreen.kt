@@ -75,7 +75,7 @@ import kotlin.math.abs
 fun VideoFrameSelector() {
 
     val viewModel: VideoEditorViewModel = hiltViewModel()
-    val dragSpace = 100
+    val dragSpace = 200
 
     Box(
         modifier = Modifier
@@ -235,7 +235,6 @@ fun VideoPlayer(uri: Uri?) {
 
             }
     }
-
 
     val playerView = remember {
         PlayerView(context).apply {
