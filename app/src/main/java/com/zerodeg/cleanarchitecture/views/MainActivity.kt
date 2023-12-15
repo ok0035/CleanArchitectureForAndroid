@@ -4,9 +4,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.zerodeg.feature_main.databinding.ActivityMainBinding
-import com.zerodeg.feature_main.ui.image.BubbleViewPager
 import com.zerodeg.feature_main.ui.image.CustomViewPager
-import com.zerodeg.feature_main.ui.image.DraggableImageExample
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -18,11 +16,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            CustomViewPager(pageCount = 10)
-//            BubbleViewPager()
+            CustomViewPager(itemList = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
 //            DraggableImageExample()
-//            SwipeableViewPager()
-//            VerticalViewPagerWithEasing()
 
         }
 
