@@ -74,6 +74,8 @@ object Libraries {
         const val COMPOSE_DEBUG_UI_TEST_MANIFEST = "androidx.compose.ui:ui-test-manifest"
         const val COMPOSE_COMPILER = "androidx.compose.compiler:compiler:1.5.4"
         const val COMPOSE_RUNTIME = "androidx.compose.runtime:runtime:1.5.4"
+        const val COMPOSE_MATERIAL = "androidx.wear.compose:compose-material:1.2.1"
+        const val COMPOSE_FOUNDATION = "androidx.compose.foundation:foundation" // Layout 지원 (ex. viewpager)
     }
 
     object Lottie {

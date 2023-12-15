@@ -72,6 +72,8 @@ dependencies {
     implementation(Libraries.Compose.COMPOSE_UI_CONSTRAINTS)
     implementation(Libraries.Compose.COMPOSE_HILT_NAVIGATION)
     implementation(Libraries.Compose.COMPOSE_RUNTIME)
+    implementation(Libraries.Compose.COMPOSE_MATERIAL)
+    implementation(Libraries.Compose.COMPOSE_FOUNDATION)
     kapt(Libraries.Compose.COMPOSE_COMPILER)
 
     //Video
