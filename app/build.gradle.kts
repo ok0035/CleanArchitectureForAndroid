@@ -56,6 +56,7 @@ dependencies {
 
     implementation(project(Modules.CORE_DATA))
     implementation(project(Modules.CORE_DOMAIN))
+    implementation(project(Modules.CORE_RES))
     implementation(project(Modules.FEATURE_MAIN))
 
     //kotlin

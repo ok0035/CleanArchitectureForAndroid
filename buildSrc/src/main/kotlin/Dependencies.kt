@@ -22,6 +22,7 @@ object Versions {
 object Modules {
     const val CORE_DATA = ":data"
     const val CORE_DOMAIN = ":domain"
+    const val CORE_RES = ":core-res"
     const val FEATURE_MAIN = ":feature-main"
     const val FEATURE_VIDEO = ":feature-video"
 }

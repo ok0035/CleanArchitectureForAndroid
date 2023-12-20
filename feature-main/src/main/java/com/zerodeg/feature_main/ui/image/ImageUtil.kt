@@ -369,8 +369,24 @@ fun BubbleViewPager(
 @Composable
 fun PagerExample(itemList: List<Int>) {
 
+    BubbleViewPager(
+        itemList = itemList,
+        modifier = Modifier.fillMaxSize()
+    ) { displayedPageIdx, selectedPageIdx ->
+        // 페이지 컨텐츠...
+        BubbleContent(
+            itemSize = itemList.size,
+            displayedPageIdx = displayedPageIdx,
+            selectedPageIdx = selectedPageIdx
+        )
+    }
+}
+
+@Composable
+fun BubbleContent(itemSize: Int, displayedPageIdx: Int, selectedPageIdx: Int) {
     val context = LocalContext.current
     val density = LocalDensity.current
+    val lastIndex = itemSize - 1
 
     val itemScale = 0.7f
     val screenHeight = context.resources.displayMetrics.heightPixels
@@ -383,123 +399,117 @@ fun PagerExample(itemList: List<Int>) {
         1f
     )
 
-    BubbleViewPager(
-        itemList = itemList,
-        modifier = Modifier.fillMaxSize()
-    ) { displayedPageIdx, selectedPageIdx ->
-        // 페이지 컨텐츠...
-        Log.d("page", "pageIndex -> $selectedPageIdx")
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(
-                    if (itemList.lastIndex == selectedPageIdx)
-                        with(density) {
-                            screenHeight.toDp()
-                        }
-                    else
-                        with(density) {
-                            itemHeight.toDp()
-                        })
-                .background(Color.White),
-        ) {
-
-            val scale = animateFloatAsState(
-                targetValue = if (displayedPageIdx == selectedPageIdx) 1f else 0.5f, label = "",
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = swipeEasing
-                )
-            )
-
-            val alpha = animateFloatAsState(
-                targetValue = if (displayedPageIdx == selectedPageIdx) 1f else 0.5f, label = "",
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = swipeEasing
-                )
-            )
-
-            val textOffset = animateFloatAsState(
-                targetValue =
-                if (displayedPageIdx == selectedPageIdx)
-                    with(density) { 0.toDp() }.value
+    Log.d("page", "pageIndex -> $selectedPageIdx")
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(
+                if (lastIndex == selectedPageIdx)
+                    with(density) {
+                        screenHeight.toDp()
+                    }
                 else
-                    with(density) { 200.toDp() }.value, label = "",
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = swipeEasing
-                )
+                    with(density) {
+                        itemHeight.toDp()
+                    })
+            .background(Color.White),
+    ) {
+
+        val scale = animateFloatAsState(
+            targetValue = if (displayedPageIdx == selectedPageIdx) 1f else 0.5f, label = "",
+            animationSpec = tween(
+                durationMillis = 500,
+                easing = swipeEasing
+            )
+        )
+
+        val alpha = animateFloatAsState(
+            targetValue = if (displayedPageIdx == selectedPageIdx) 1f else 0.5f, label = "",
+            animationSpec = tween(
+                durationMillis = 500,
+                easing = swipeEasing
+            )
+        )
+
+        val textOffset = animateFloatAsState(
+            targetValue =
+            if (displayedPageIdx == selectedPageIdx)
+                with(density) { 0.toDp() }.value
+            else
+                with(density) { 200.toDp() }.value, label = "",
+            animationSpec = tween(
+                durationMillis = 500,
+                easing = swipeEasing
+            )
+        )
+
+        val textAlpha = animateFloatAsState(
+            targetValue = if (displayedPageIdx == selectedPageIdx) 1f else 0f, label = "",
+            animationSpec = tween(
+                durationMillis = 500,
+                easing = swipeEasing
+            )
+        )
+
+        Column {
+
+            RotatingImage(
+                painterResource(id = R.drawable.frame),
+                painterResource(id = R.drawable.potato),
+                offsetY = 0f,
+                scaleX = scale.value,
+                scaleY = scale.value,
+                alpha = alpha.value
             )
 
-            val textAlpha = animateFloatAsState(
-                targetValue = if (displayedPageIdx == selectedPageIdx) 1f else 0f, label = "",
-                animationSpec = tween(
-                    durationMillis = 500,
-                    easing = swipeEasing
-                )
-            )
+            Box(
+                modifier = Modifier
+                    .padding(start = 56.dp, end = 56.dp, top = 12.dp)
+                    .offset {
+                        IntOffset(x = 0, y = textOffset.value.roundToInt())
+                    }
+                    .graphicsLayer {
+                        this.scaleX = scale.value
+                        this.scaleY = scale.value
+                    }
+                    .alpha(textAlpha.value),
+                contentAlignment = Alignment.Center
+            ) {
 
-            Column {
-
-                RotatingImage(
-                    painterResource(id = R.drawable.frame),
-                    painterResource(id = R.drawable.potato),
-                    offsetY = 0f,
-                    scaleX = scale.value,
-                    scaleY = scale.value,
-                    alpha = alpha.value
-                )
-
-                Box(
+                Text(
                     modifier = Modifier
-                        .padding(start = 56.dp, end = 56.dp, top = 12.dp)
-                        .offset {
-                            IntOffset(x = 0, y = textOffset.value.roundToInt())
-                        }
-                        .graphicsLayer {
-                            this.scaleX = scale.value
-                            this.scaleY = scale.value
-                        }
-                        .alpha(textAlpha.value),
-                    contentAlignment = Alignment.Center
-                ) {
+                        .fillMaxWidth(),
+                    text = "그라운드시소 서촌",
+                    textAlign = TextAlign.Center,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight(800)
 
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        text = "그라운드시소 서촌",
-                        textAlign = TextAlign.Center,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight(800)
+                )
 
-                    )
+            }
 
-                }
+            Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .padding(start = 56.dp, end = 56.dp)
+                    .graphicsLayer {
+                        this.scaleX = scale.value
+                        this.scaleY = scale.value
+                    }
+                    .alpha(textAlpha.value),
+                contentAlignment = Alignment.Center
+            ) {
 
-                Box(
+                Text(
                     modifier = Modifier
-                        .padding(start = 56.dp, end = 56.dp)
-                        .graphicsLayer {
-                            this.scaleX = scale.value
-                            this.scaleY = scale.value
-                        }
-                        .alpha(textAlpha.value),
-                    contentAlignment = Alignment.Center
-                ) {
+                        .fillMaxWidth(),
+                    text = "은평한옥마을의 한옥들은 우리가 익히 잘 아는 북촌의 그것과는 다른 인상을 심어준다.",
+                    textAlign = TextAlign.Center,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight(400)
+                )
 
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        text = "은평한옥마을의 한옥들은 우리가 익히 잘 아는 북촌의 그것과는 다른 인상을 심어준다.",
-                        textAlign = TextAlign.Center,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight(400)
-                    )
-
-                }
             }
         }
     }
