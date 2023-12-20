@@ -1,5 +1,6 @@
 package com.zerodeg.feature_video.views
 
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -18,10 +19,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,7 +44,6 @@ fun MainScreen() {
     val context = LocalContext.current
 
 
-
     val videoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -56,16 +54,18 @@ fun MainScreen() {
             val newPath = viewModel.getTempRandomPath(path.split(".").last())
             Log.d("ENCODING", "New path -> $newPath")
             viewModel.encodeVideoWithKeyframeInterval(path, newPath) { encodedUri ->
-//                viewModel.updateSelectedVideoUri(encodedUri)
                 viewModel.updateVideoTotalTime(path) { totalTime ->
-//                    viewModel.selectedVideoUri.value?.let { uri ->
-//                        val retriever = MediaMetadataRetriever()
-//                        retriever.setDataSource(context, uri)
-//                    }
                     viewModel.videoStateList[0].uri = encodedUri
                     viewModel.videoStateList[0].totalTime = totalTime.toInt()
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(context, uri)
+                    viewModel.loadBitmaps(retriever,
+                        onSuccess = { bitmaps ->
+                            viewModel.videoStateList[0].bitmapList = bitmaps
+                        }, onComplete = {
+                            viewModel.isLoading = false
+                        })
                     viewModel.selectedVideoIdx.intValue = 0
-                    viewModel.isLoading = false
                 }
             }
 
@@ -81,16 +81,18 @@ fun MainScreen() {
             val newPath = viewModel.getTempRandomPath(path.split(".").last())
             Log.d("ENCODING", "New path -> $newPath")
             viewModel.encodeVideoWithKeyframeInterval(path, newPath) { encodedUri ->
-//                viewModel.updateSelectedVideoUri(encodedUri)
                 viewModel.updateVideoTotalTime(path) { totalTime ->
-//                    viewModel.selectedVideoUri.value?.let { uri ->
-//                        val retriever = MediaMetadataRetriever()
-//                        retriever.setDataSource(context, uri)
-//                    }
                     viewModel.videoStateList[1].uri = encodedUri
                     viewModel.videoStateList[1].totalTime = totalTime.toInt()
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(context, uri)
+                    viewModel.loadBitmaps(retriever,
+                        onSuccess = { bitmaps ->
+                            viewModel.videoStateList[1].bitmapList = bitmaps
+                        }, onComplete = {
+                            viewModel.isLoading = false
+                        })
                     viewModel.selectedVideoIdx.intValue = 1
-                    viewModel.isLoading = false
                 }
             }
 
@@ -110,7 +112,14 @@ fun MainScreen() {
                     viewModel.videoStateList[2].uri = encodedUri
                     viewModel.videoStateList[2].totalTime = totalTime.toInt()
                     viewModel.selectedVideoIdx.intValue = 2
-                    viewModel.isLoading = false
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(context, uri)
+                    viewModel.loadBitmaps(retriever,
+                        onSuccess = { bitmaps ->
+                            viewModel.videoStateList[2].bitmapList = bitmaps
+                        }, onComplete = {
+                            viewModel.isLoading = false
+                        })
                 }
             }
 
@@ -131,21 +140,18 @@ fun MainScreen() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 100.dp)
                 .background(Color.Black)
                 .constrainAs(editView) {
                     top.linkTo(parent.top)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                     bottom.linkTo(selectButtons.top)
-                },
-            contentAlignment = Alignment.Center
+                }
         ) {
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(),
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -154,8 +160,7 @@ fun MainScreen() {
 
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
+                        .fillMaxSize(),
                     contentAlignment = Alignment.Center
 
                 ) {
@@ -165,10 +170,12 @@ fun MainScreen() {
 //                            Log.d("VideoPlayer", "state -> ${viewModel.videoState1.uri?.path}")
                             VideoPlayer(viewModel.videoStateList[0])
                         }
+
                         1 -> {
 //                            Log.d("VideoPlayer", "state2 -> ${viewModel.videoState2.uri?.path}")
                             VideoPlayer(viewModel.videoStateList[1])
                         }
+
                         2 -> {
 //                            Log.d("VideoPlayer", "state3 -> ${viewModel.videoState3.uri?.path}")
                             VideoPlayer(viewModel.videoStateList[2])
@@ -379,5 +386,12 @@ fun MainScreen() {
             }
         }
 
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.deleteCacheData()
+//            exoPlayer.release()
+        }
     }
 }

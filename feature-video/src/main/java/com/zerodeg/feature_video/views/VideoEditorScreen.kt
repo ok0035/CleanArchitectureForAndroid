@@ -5,7 +5,9 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,10 +40,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Yellow
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -53,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.C
 import androidx.media3.common.PlaybackParameters
@@ -62,12 +69,17 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.google.ads.interactivemedia.v3.internal.it
 import com.zerodeg.domain.video_editor.VideoState
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
+import kotlinx.coroutines.NonDisposableHandle
+import kotlinx.coroutines.NonDisposableHandle.parent
 import kotlin.math.abs
 
 @Composable
-fun VideoFrameSelector(videoState: VideoState) {
+fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
+
+    val viewModel: VideoEditorViewModel = hiltViewModel()
 
     val dragSpace = 200
     var maxWidth by remember { mutableStateOf(0.dp) }
@@ -78,38 +90,54 @@ fun VideoFrameSelector(videoState: VideoState) {
             if (videoState.start == -(1.dp))
                 start = 0.dp
 
-            if(videoState.end == -(1.dp))
+            if (videoState.end == -(1.dp))
                 end = maxWidth
 
-            if(videoState.width == -(1.dp))
+            if (videoState.width == -(1.dp))
                 width = maxWidth
         }
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
+        modifier = modifier
     ) {
-
 
         BoxWithConstraints(
             modifier = Modifier
-                .padding(start = 40.dp, end = 40.dp, top = 20.dp)
                 .fillMaxWidth()
-                .height(150.dp)
+                .fillMaxHeight()
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color.LightGray)
+                .background(Color.Unspecified)
+                .border(2.dp, Color.White, RoundedCornerShape(12.dp)),
         ) {
 
             maxWidth = (constraints.maxWidth.dp.value / LocalDensity.current.density).dp
+
+            Row(Modifier.fillMaxSize()) {
+                val imageWidth = maxWidth / (videoState.bitmapList?.size ?: 1)
+                val bitmapList = videoState.bitmapList
+
+                bitmapList?.let { bitmaps ->
+                    for (bitmap in bitmaps) {
+                        Image(
+                            modifier = Modifier
+                                .width(imageWidth)
+                                .fillMaxHeight(),
+                            bitmap = bitmap.asImageBitmap(),
+                            contentScale = ContentScale.FillHeight,
+                            contentDescription = null
+                        )
+                    }
+                }
+
+            }
 
             Box(
                 modifier = Modifier
                     .width(videoState.width)
                     .offset(x = videoState.start)
                     .fillMaxHeight()
-                    .background(Color.DarkGray),
+                    .background(Color.Unspecified)
             ) {
 
                 val dragBarWidth = 10.dp
@@ -119,7 +147,8 @@ fun VideoFrameSelector(videoState: VideoState) {
                     modifier = Modifier
                         .fillMaxHeight()
                         .size(dragBarWidth, 0.dp)
-                        .background(Color.Yellow)
+                        .background(Color(0XFF0FD3D8))
+                        .border(2.dp, Color.White, RoundedCornerShape(12.dp))
                         .align(Alignment.CenterStart)
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
@@ -159,7 +188,8 @@ fun VideoFrameSelector(videoState: VideoState) {
                     modifier = Modifier
                         .fillMaxHeight()
                         .size(dragBarWidth, 0.dp)
-                        .background(Color.Yellow)
+                        .background(Color(0XFF0FD3D8))
+                        .border(2.dp, Color.White, RoundedCornerShape(12.dp))
                         .align(Alignment.CenterEnd)
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
@@ -231,53 +261,62 @@ fun VideoPlayer(state: VideoState) {
         }
     }
 
-    Column {
+    ConstraintLayout(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(start = 40.dp, end = 40.dp)
+            .background(Color.Unspecified)
+    ) {
+
+        val (player, selector) = createRefs()
+        val guideline = createGuidelineFromBottom(0.5f)
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
+                .clip(RoundedCornerShape(12.dp)) // 여기에 clip 적용
+                .constrainAs(player) {
+                    top.linkTo(parent.top, 100.dp)
+                    start.linkTo(parent.start, 40.dp)
+                    end.linkTo(parent.end, 40.dp)
+                }
+                .height(500.dp)
                 .background(Color.Unspecified)
-                .padding(start = 40.dp, end = 40.dp, bottom = 20.dp),
-            contentAlignment = Alignment.Center
+//                .onSizeChanged { newSize ->
+//                    size = newSize.toSize()
+//                    Log.d("size", "size -> $size")
+//                }
         ) {
-
-            var size by remember { mutableStateOf(Size.Zero) }
-
-            Box(
+            AndroidView(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp)) // 여기에 clip 적용
-                    .height(300.dp)
-                    .wrapContentWidth()
-                    .padding(1.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(Color.Unspecified)
-                    .onSizeChanged { newSize ->
-                        size = newSize.toSize()
-                        Log.d("size", "size -> $size")
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                AndroidView(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.Yellow)
-                        .wrapContentWidth()
-                        .wrapContentHeight(),
-                    factory = {
-                        playerView
-                    })
+                    .border(2.dp, Color.White, RoundedCornerShape(12.dp))
+                    .wrapContentWidth()
+                    .wrapContentHeight(),
+                factory = {
+                    playerView
+                })
 
-                DraggableBox(
-                    parentWidth = size.width, parentHeight = size.height
-                )
-            }
+//            DraggableBox(
+//                parentWidth = size.width, parentHeight = size.height
+//            )
         }
 
         state.uri?.let {
-            VideoFrameSelector(videoState = state)
-        }
 
+            VideoFrameSelector(modifier = Modifier
+                .height(100.dp)
+                .constrainAs(selector) {
+                    top.linkTo(player.bottom, 30.dp)
+                    start.linkTo(parent.start, 40.dp)
+                    end.linkTo(parent.end, 40.dp)
+                }, videoState = state
+            )
+        }
     }
+
+
+
     LaunchedEffect(state.selectedTime) {
         val selectedTime = state.selectedTime.toLong()
         playerView.player?.seekTo(selectedTime)
@@ -291,37 +330,6 @@ fun VideoPlayer(state: VideoState) {
             Log.d("VIDEO", "CHANGE INTO $it")
             exoPlayer.setMediaSource(viewModel.getMediaSource(it))
             exoPlayer.prepare()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-//            viewModel.deleteCacheData()
-//            exoPlayer.release()
-        }
-    }
-}
-
-@Composable
-fun GalleryVideoPicker(onVideoPicked: () -> Unit) {
-
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize() // Column을 부모 컨테이너 크기만큼 채움
-            .padding(16.dp), // 패딩 추가
-        verticalArrangement = Arrangement.Bottom, // 세로 방향으로 하단 정렬
-        horizontalAlignment = Alignment.CenterHorizontally // 가로 방향으로 중앙 정렬
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(), // Row를 부모 컨테이너 너비만큼 채움
-            horizontalArrangement = Arrangement.Center // 가로 방향으로 중앙 정렬
-        ) {
-            Button(
-                onClick = { onVideoPicked() },
-            ) {
-                Text("Select Video")
-            }
         }
     }
 

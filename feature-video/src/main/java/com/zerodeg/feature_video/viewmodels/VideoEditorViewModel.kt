@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.google.ads.interactivemedia.v3.internal.it
 import com.zerodeg.domain.video_editor.VideoState
@@ -64,20 +65,30 @@ class VideoEditorViewModel @Inject constructor(
     //ms
     fun loadBitmaps(
         retriever: MediaMetadataRetriever,
-        totalTime: Long,
         onSuccess: (bitmapList: List<Bitmap>) -> Unit,
         onComplete: () -> Unit
     ) = viewModelScope.launch(Dispatchers.IO) {
         try {
-            val step = (totalTime / 10)
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0
+            val step = duration / 10
+
+//            val step = (totalTime / 10)
             val bitmapList = mutableListOf<Bitmap>()
-            for (i in 0..totalTime step step) {
-                val frameBitmap = retriever.getFrameAtTime(i)
-                frameBitmap?.let {
-                    bitmapList.add(frameBitmap)
-                }
+            for (i in 0 until 10) {
+                val timeUs = i * step * 1000 // 마이크로초 단위로 변환
+                val bitmap = retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                bitmap?.let { bitmapList.add(it) }
             }
             onSuccess(bitmapList)
+
+//            val interval =  / 10
+//            for (i in 0 until 10) {
+//                val timestamp = i * interval
+//                val outputPath = "output_image_$i.jpg"
+//                val cmd = "ffmpeg -i $videoPath -ss $timestamp -vframes 1 $outputPath"
+//                FFmpegKit.execute(cmd)
+//            }
+
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
