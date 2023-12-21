@@ -1,6 +1,8 @@
 package com.zerodeg.feature_video.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
 import androidx.media3.common.MediaItem
@@ -13,7 +15,9 @@ import com.arthenica.ffmpegkit.FFmpegSession
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.arthenica.ffmpegkit.SessionState
+import com.google.ads.interactivemedia.v3.internal.it
 import com.zerodeg.domain.video_editor.VideoState
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -62,6 +66,14 @@ class VideoUtils @Inject constructor(
                 onError()
             }
         }
+    }
+
+    fun syncScale(videoStateList: List<VideoState>) {
+        /*
+        16 : 9 or 9 : 16
+        1920 X 1080
+        1080 X 1920
+        */
     }
 
     fun mergeVideos(
@@ -173,6 +185,36 @@ class VideoUtils @Inject constructor(
             ) // 백버퍼 길이 (10초), 재생 중에도 유지
             .build()
 
+    }
+
+    suspend fun loadBitmaps(
+        uri: Uri,
+        onSuccess: (bitmaps: List<Bitmap>) -> Unit,
+        onComplete: () -> Unit
+    ) {
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(context, uri)
+            val duration =
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong()
+                    ?: 0
+            val step = duration / 10
+            val bitmapList = mutableListOf<Bitmap>()
+            for (i in 0 until 10) {
+                val timeUs = i * step * 1000 // 마이크로초 단위로 변환
+                val bitmap =
+                    retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                bitmap?.let { bitmapList.add(it) }
+            }
+            onSuccess(bitmapList)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            delay(2000)
+            retriever.release()
+            onComplete.invoke()
+        }
     }
 
     fun overlayHandwriting() {

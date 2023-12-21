@@ -2,30 +2,41 @@ package com.zerodeg.feature_video.views
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.provider.MediaStore.PickerMediaColumns
 import android.util.Log
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,12 +44,9 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.zerodeg.domain.video_editor.VideoState
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.contracts.contract
+import kotlinx.coroutines.NonDisposableHandle.parent
 
 @Preview
 @Composable
@@ -62,9 +70,7 @@ fun MainScreen() {
                 viewModel.updateVideoTotalTime(path) { totalTime ->
                     viewModel.videoStateList[0].uri = encodedUri
                     viewModel.videoStateList[0].totalTime = totalTime.toInt()
-                    val retriever = MediaMetadataRetriever()
-                    retriever.setDataSource(context, uri)
-                    viewModel.loadBitmaps(retriever,
+                    viewModel.loadBitmaps(uri,
                         onSuccess = { bitmaps ->
                             viewModel.videoStateList[0].bitmapList = bitmaps
                         }, onComplete = {
@@ -89,9 +95,7 @@ fun MainScreen() {
                 viewModel.updateVideoTotalTime(path) { totalTime ->
                     viewModel.videoStateList[1].uri = encodedUri
                     viewModel.videoStateList[1].totalTime = totalTime.toInt()
-                    val retriever = MediaMetadataRetriever()
-                    retriever.setDataSource(context, uri)
-                    viewModel.loadBitmaps(retriever,
+                    viewModel.loadBitmaps(uri,
                         onSuccess = { bitmaps ->
                             viewModel.videoStateList[1].bitmapList = bitmaps
                         }, onComplete = {
@@ -119,7 +123,7 @@ fun MainScreen() {
                     viewModel.selectedVideoIdx.intValue = 2
                     val retriever = MediaMetadataRetriever()
                     retriever.setDataSource(context, uri)
-                    viewModel.loadBitmaps(retriever,
+                    viewModel.loadBitmaps(uri,
                         onSuccess = { bitmaps ->
                             viewModel.videoStateList[2].bitmapList = bitmaps
                         }, onComplete = {
@@ -138,156 +142,130 @@ fun MainScreen() {
             .background(Color.Black)
     ) {
 
-        val editView = createRef()
-        val editMenuRef = createRef()
-        val selectButtons = createRef()
+        val (editView, editMenuRef, selectButtons) = createRefs()
 
         Box(
             modifier = Modifier
-                .fillMaxSize()
                 .background(Color.Black)
                 .constrainAs(editView) {
                     top.linkTo(parent.top)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    bottom.linkTo(selectButtons.top)
+                    start.linkTo(parent.start, 8.dp)
+                    end.linkTo(parent.end, 8.dp)
+                    bottom.linkTo(selectButtons.top, margin = 40.dp)
+                    width = Dimension.fillToConstraints
+                    height = Dimension.fillToConstraints
                 }
         ) {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
 //                GradientText()
+//                VideoPlayer(state = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue])
+            when (viewModel.selectedVideoIdx.intValue) {
+                0 -> {
+//                Log.d("VideoPlayer", "state -> ${viewModel.videoState1.uri?.path}")
+                    VideoPlayer(viewModel.videoStateList[0])
+                }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                1 -> {
+//                Log.d("VideoPlayer", "state2 -> ${viewModel.videoState2.uri?.path}")
+                    VideoPlayer(viewModel.videoStateList[1])
+                }
 
-                ) {
-//                    VideoPlayer(state = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue])
-                    when (viewModel.selectedVideoIdx.intValue) {
-                        0 -> {
-//                            Log.d("VideoPlayer", "state -> ${viewModel.videoState1.uri?.path}")
-                            VideoPlayer(viewModel.videoStateList[0])
-                        }
-
-                        1 -> {
-//                            Log.d("VideoPlayer", "state2 -> ${viewModel.videoState2.uri?.path}")
-                            VideoPlayer(viewModel.videoStateList[1])
-                        }
-
-                        2 -> {
-//                            Log.d("VideoPlayer", "state3 -> ${viewModel.videoState3.uri?.path}")
-                            VideoPlayer(viewModel.videoStateList[2])
-                        }
-
-                    }
+                2 -> {
+//                Log.d("VideoPlayer", "state3 -> ${viewModel.videoState3.uri?.path}")
+                    VideoPlayer(viewModel.videoStateList[2])
                 }
 
             }
 
+
         }
+
 
         ConstraintLayout(
             modifier = Modifier
-                .padding(start = 40.dp, end = 40.dp, top = 20.dp, bottom = 20.dp)
-                .fillMaxWidth()
-                .wrapContentHeight()
                 .background(Color.Black)
                 .constrainAs(selectButtons) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    bottom.linkTo(editMenuRef.top)
+                    top.linkTo(editView.bottom)
+                    start.linkTo(parent.start, margin = 40.dp)
+                    end.linkTo(parent.end, margin = 40.dp)
+                    bottom.linkTo(editMenuRef.top, margin = 20.dp)
+                    width = Dimension.fillToConstraints
+                    height = Dimension.wrapContent
                 }
         ) {
 
             val (sel1, sel2, sel3) = createRefs()
 
-            Text(
-                text = "SELECT1",
-                color = Color.White,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .background(Color.Black)
-                    .constrainAs(sel1) {
-                        start.linkTo(parent.start)
-                        end.linkTo(sel2.start)
-                        bottom.linkTo(parent.bottom)
-                        top.linkTo(parent.top)
-                        width = Dimension.fillToConstraints
+            SelectVideoView(modifier = Modifier
+                .constrainAs(sel1) {
+                    start.linkTo(parent.start)
+                    end.linkTo(sel2.start, 8.dp)
+                    bottom.linkTo(parent.bottom)
+                    top.linkTo(parent.top)
+                    width = Dimension.fillToConstraints
+                    height = Dimension.value(200.dp)
+                }, viewModel.videoStateList[0].bitmapList?.get(1)?.asImageBitmap(),
+                isSelect = viewModel.selectedVideoIdx.intValue == 0,
+                onClick = {
+                    if (viewModel.videoStateList[0].uri == null) {
+                        videoPickerLauncher.launch("video/*")
+                    } else {
+                        viewModel.selectedVideoIdx.intValue = 0
                     }
-                    .clickable {
-                        if (viewModel.videoStateList[0].uri == null) {
-                            videoPickerLauncher.launch("video/*")
-                        } else {
-                            viewModel.selectedVideoIdx.intValue = 0
-                        }
-                    },
+                }
+            )
 
-                )
-
-            Text(
-                text = "SELECT2",
-                color = Color.White,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .background(Color.Black)
-                    .constrainAs(sel2) {
-                        start.linkTo(sel1.end)
-                        end.linkTo(sel3.start)
-                        bottom.linkTo(parent.bottom)
-                        top.linkTo(parent.top)
-                        width = Dimension.fillToConstraints
+            SelectVideoView(modifier = Modifier
+                .constrainAs(sel2) {
+                    start.linkTo(sel1.end)
+                    end.linkTo(sel3.start, 8.dp)
+                    bottom.linkTo(parent.bottom)
+                    top.linkTo(parent.top)
+                    width = Dimension.fillToConstraints
+                    height = Dimension.value(200.dp)
+                }, viewModel.videoStateList[1].bitmapList?.get(1)?.asImageBitmap(),
+                isSelect = viewModel.selectedVideoIdx.intValue == 1,
+                onClick = {
+                    if (viewModel.videoStateList[1].uri == null) {
+                        videoPickerLauncher2.launch("video/*")
+                    } else {
+                        viewModel.selectedVideoIdx.intValue = 1
                     }
-                    .clickable {
-                        if (viewModel.videoStateList[1].uri == null)
-                            videoPickerLauncher2.launch("video/*")
-                        else viewModel.selectedVideoIdx.intValue = 1
-                    },
+                }
+            )
 
-                )
-
-            Text(
-                text = "SELECT3",
-                color = Color.White,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .background(Color.Black)
-                    .constrainAs(sel3) {
-                        start.linkTo(sel2.end)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(parent.bottom)
-                        top.linkTo(parent.top)
-                        width = Dimension.fillToConstraints
+            SelectVideoView(modifier = Modifier
+                .constrainAs(sel3) {
+                    start.linkTo(sel2.end)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                    top.linkTo(parent.top)
+                    width = Dimension.fillToConstraints
+                    height = Dimension.value(200.dp)
+                }, viewModel.videoStateList[2].bitmapList?.get(1)?.asImageBitmap(),
+                isSelect = viewModel.selectedVideoIdx.intValue == 2,
+                onClick = {
+                    if (viewModel.videoStateList[2].uri == null) {
+                        videoPickerLauncher3.launch("video/*")
+                    } else {
+                        viewModel.selectedVideoIdx.intValue = 2
                     }
-                    .clickable {
-                        if (viewModel.videoStateList[2].uri == null)
-                            videoPickerLauncher3.launch("video/*")
-                        else viewModel.selectedVideoIdx.intValue = 2
-                    },
-
-                )
+                }
+            )
 
         }
 
         ConstraintLayout(
             modifier = Modifier
-                .padding(start = 40.dp, end = 40.dp, top = 20.dp)
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .background(Color.Black)
                 .constrainAs(editMenuRef) {
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                    bottom.linkTo(parent.bottom)
+                    start.linkTo(parent.start, margin = 40.dp)
+                    end.linkTo(parent.end, margin = 40.dp)
+                    bottom.linkTo(parent.bottom, margin = 20.dp)
+                    width = Dimension.fillToConstraints
+                    height = Dimension.wrapContent
                 }
         ) {
 
@@ -354,7 +332,7 @@ fun MainScreen() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.3f))
+                    .background(Color.Black.copy(alpha = 0.7f))
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() }) { /* 클릭 이벤트 차단 */ },

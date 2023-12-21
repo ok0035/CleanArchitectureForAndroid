@@ -49,6 +49,7 @@ dependencies {
 
     implementation(project(Modules.CORE_DATA))
     implementation(project(Modules.CORE_DOMAIN))
+    implementation(project(Modules.CORE_RES))
 
     //kotlin
     implementation(Libraries.KTX.CORE)

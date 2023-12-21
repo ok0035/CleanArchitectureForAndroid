@@ -34,7 +34,7 @@ class VideoEditorViewModel @Inject constructor(
     )
     var isLoading by mutableStateOf<Boolean>(false)
     var loadingMsg: MutableState<String> = mutableStateOf("비디오를 불러오고 있어요.")
-    val selectedVideoIdx = mutableIntStateOf(0)
+    val selectedVideoIdx = mutableIntStateOf(-1)
 
     fun getMediaSource(uri: Uri) = videoUtils.getMediaSource(uri)
 
@@ -65,34 +65,26 @@ class VideoEditorViewModel @Inject constructor(
 
     //ms
     fun loadBitmaps(
-        retriever: MediaMetadataRetriever,
+        uri: Uri,
         onSuccess: (bitmapList: List<Bitmap>) -> Unit,
         onComplete: () -> Unit
     ) = viewModelScope.launch(Dispatchers.IO) {
-        try {
-            isLoading = true
-            loadingMsg.value = "비디오 이미지를 가져오고 있어요 !"
-            val duration =
-                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong()
-                    ?: 0
-            val step = duration / 10
-            val bitmapList = mutableListOf<Bitmap>()
-            for (i in 0 until 10) {
-                val timeUs = i * step * 1000 // 마이크로초 단위로 변환
-                val bitmap =
-                    retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                bitmap?.let { bitmapList.add(it) }
-            }
-            onSuccess(bitmapList)
+        isLoading = true
+        loadingMsg.value = "비디오 이미지를 가져오고 있어요 !"
+        videoUtils.loadBitmaps(
+            uri,
+            onSuccess = { bitmaps ->
+                onSuccess(bitmaps)
+            },
+            onComplete = {
+                viewModelScope.launch(Dispatchers.IO) {
+                    onComplete.invoke()
+                    delay(2000)
+                    isLoading = false
+                }
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            retriever.release()
-            onComplete.invoke()
-            delay(2000)
-            isLoading = false
-        }
+            }
+        )
 
     }
 
@@ -101,10 +93,24 @@ class VideoEditorViewModel @Inject constructor(
     ) = viewModelScope.launch {
         //loading start
         isLoading = true
-        loadingMsg.value = "비디오를 열심히 불러오고 있어요 !"
+        val loadingCoroutine = viewModelScope.launch {
+            while (isLoading) {
+                loadingMsg.value = "동영상을 열심히 가져오고 있어요 !"
+                delay(5000)
+                if (!isLoading) break
+                loadingMsg.value = "품질이 좋은 영상인 것 같아요 !"
+                delay(5000)
+                if (!isLoading) break
+                loadingMsg.value = "거의 다 가져왔어요 !"
+                delay(5000)
+                if (!isLoading) break
+            }
+        }
+        loadingCoroutine.start()
         videoUtils.encodeVideoWithKeyframeInterval(videoPath, outputPath) {
             //loading end
             onCompletion(it)
+            loadingCoroutine.cancel()
             isLoading = false
         }
     }
@@ -124,9 +130,8 @@ class VideoEditorViewModel @Inject constructor(
             onSuccess = { path ->
                 Log.d("trim", "success -> $path")
                 loadingMsg.value = "비디오 정보를 가져오고 있어요 !"
-                val retriever = MediaMetadataRetriever()
-                retriever.setDataSource(path)
-                loadBitmaps(retriever,
+                loadBitmaps(
+                    Uri.parse(path),
                     onSuccess = { bitmaps ->
 
                         loadingMsg.value = "이제 거의 다 됐어요 !"
@@ -162,28 +167,7 @@ class VideoEditorViewModel @Inject constructor(
         onError: () -> Unit,
         onSuccess: (uri: Uri) -> Unit
     ) = viewModelScope.launch {
-//        val videoPaths = mutableListOf<VideoState>()
-//        for (videoPathIdx in 0..2) {
-//            when (videoPathIdx) {
-//                0 -> {
-//                    videoState1.uri?.path?.let {
-//                        videoPaths.add(videoState1)
-//                    }
-//                }
-//
-//                1 -> {
-//                    videoState2.uri?.path?.let {
-//                        videoPaths.add(videoState2)
-//                    }
-//                }
-//
-//                2 -> {
-//                    videoState3.uri?.path?.let {
-//                        videoPaths.add(videoState3)
-//                    }
-//                }
-//            }
-//        }
+
         videoUtils.mergeVideos(
             videoPaths = videoStateList,
             outputFile = outputFile,
