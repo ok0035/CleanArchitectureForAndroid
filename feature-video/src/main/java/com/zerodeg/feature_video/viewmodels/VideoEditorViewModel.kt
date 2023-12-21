@@ -20,6 +20,7 @@ import com.zerodeg.domain.video_editor.VideoState
 import com.zerodeg.feature_video.utils.VideoUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -69,31 +70,28 @@ class VideoEditorViewModel @Inject constructor(
         onComplete: () -> Unit
     ) = viewModelScope.launch(Dispatchers.IO) {
         try {
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0
+            isLoading = true
+            loadingMsg.value = "비디오 이미지를 가져오고 있어요 !"
+            val duration =
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong()
+                    ?: 0
             val step = duration / 10
-
-//            val step = (totalTime / 10)
             val bitmapList = mutableListOf<Bitmap>()
             for (i in 0 until 10) {
                 val timeUs = i * step * 1000 // 마이크로초 단위로 변환
-                val bitmap = retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                val bitmap =
+                    retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                 bitmap?.let { bitmapList.add(it) }
             }
             onSuccess(bitmapList)
-
-//            val interval =  / 10
-//            for (i in 0 until 10) {
-//                val timestamp = i * interval
-//                val outputPath = "output_image_$i.jpg"
-//                val cmd = "ffmpeg -i $videoPath -ss $timestamp -vframes 1 $outputPath"
-//                FFmpegKit.execute(cmd)
-//            }
 
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
             retriever.release()
             onComplete.invoke()
+            delay(2000)
+            isLoading = false
         }
 
     }
@@ -123,24 +121,36 @@ class VideoEditorViewModel @Inject constructor(
                 Log.d("trim", "error")
                 isLoading = false
             },
-            onSuccess = {path ->
+            onSuccess = { path ->
                 Log.d("trim", "success -> $path")
                 loadingMsg.value = "비디오 정보를 가져오고 있어요 !"
-                videoUtils.updateVideoTotalTime(path) {
-                    Log.d("trim", "get length -> $it")
-                    videoStateList[selectedVideoIdx.intValue].apply {
-                        uri = Uri.parse(path)
-                        start = -(1.dp)
-                        end = -(1.dp)
-                        width = -(1.dp)
-                        totalTime = it.toInt()
-                        startTime = 0
-                        endTime = it.toInt()
-                        selectedTime = 0
-                    }
-                }
+                val retriever = MediaMetadataRetriever()
+                retriever.setDataSource(path)
+                loadBitmaps(retriever,
+                    onSuccess = { bitmaps ->
 
-                loadingMsg.value = ""
+                        loadingMsg.value = "이제 거의 다 됐어요 !"
+                        videoUtils.updateVideoTotalTime(path) {
+                            Log.d("trim", "get length -> $it")
+                            videoStateList[selectedVideoIdx.intValue].apply {
+                                uri = Uri.parse(path)
+                                start = 0.dp
+                                end = -(1.dp)
+                                width = -(1.dp)
+                                totalTime = it.toInt()
+                                startTime = 0
+                                endTime = it.toInt()
+                                selectedTime = 0
+                                bitmapList = bitmaps
+                            }
+                        }
+
+                    },
+                    onComplete = {
+
+                    }
+                )
+
                 isLoading = false
 
             }

@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,10 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.contracts.contract
 
 @Preview
@@ -63,7 +68,7 @@ fun MainScreen() {
                         onSuccess = { bitmaps ->
                             viewModel.videoStateList[0].bitmapList = bitmaps
                         }, onComplete = {
-                            viewModel.isLoading = false
+
                         })
                     viewModel.selectedVideoIdx.intValue = 0
                 }
