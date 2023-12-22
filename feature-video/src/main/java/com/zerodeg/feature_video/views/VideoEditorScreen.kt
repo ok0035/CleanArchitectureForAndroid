@@ -10,12 +10,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,10 +25,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,12 +38,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Yellow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -74,13 +68,12 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.google.ads.interactivemedia.v3.internal.it
 import com.zerodeg.domain.video_editor.VideoState
-import com.zerodeg.feature_video.R
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
-import kotlinx.coroutines.NonDisposableHandle
-import kotlinx.coroutines.NonDisposableHandle.parent
-import kotlin.math.abs
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 @Composable
 fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
@@ -89,15 +82,21 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
 
     val dragSpace = 200
     var maxWidth by remember { mutableStateOf(0.dp) }
+    var isTrimming by remember { mutableStateOf(false) }
+    val dragBarWidth = 10.dp
 
     LaunchedEffect(key1 = maxWidth, key2 = videoState.totalTime) {
         videoState.apply {
 
-            if (videoState.start == -(1.dp))
+            if (videoState.start == -(1.dp)) {
                 start = 0.dp
+                startTime = 0
+            }
 
-            if (videoState.end == -(1.dp))
+            if (videoState.end == -(1.dp)) {
                 end = maxWidth
+                endTime = totalTime
+            }
 
             if (videoState.width == -(1.dp))
                 width = maxWidth
@@ -138,15 +137,63 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
 
             }
 
+            //Playing Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .size(1.dp, 0.dp)
+                    .offset(x = ((videoState.playingTime.toDouble() * maxWidth.value.toDouble()) / videoState.totalTime.toDouble()).dp)
+                    .background(Color.Black)
+                    .align(Alignment.CenterStart)
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+
+//                                videoState.selectedTime =
+//                                    (videoState.totalTime / maxWidth.value * videoState.start.value).toInt()
+                            val playingPos =
+                                ((videoState.playingTime * maxWidth.value) / videoState.totalTime).dp
+
+                            videoState.width =
+                                videoState.end - videoState.start
+
+                            Log.d("PlayingBar", "PlayingPos -> $playingPos")
+
+                            var newPlayingPos = playingPos + dragAmount.x.toDp()
+                            val endBar =
+                                (videoState.end - (dragBarWidth.value * 2).dp)
+
+                            if (newPlayingPos < videoState.start) newPlayingPos =
+                                videoState.start
+                            else if (newPlayingPos >= endBar)
+                                newPlayingPos = endBar
+
+                            val newTime =
+                                ((videoState.totalTime / maxWidth.value) * newPlayingPos.value)
+                                    .toLong()
+                                    .coerceIn(0, videoState.totalTime - 1)
+
+//                            if (abs(videoState.playingTime - newTime) > dragSpace) {
+                            videoState.playingTime = newTime
+                            videoState.selectedTime = newTime
+//                            }
+
+                            Log.d(
+                                "CHANGE",
+                                "Player Bar -> total time : ${videoState.totalTime} new time : $newTime newPlayingPos : ${newPlayingPos.value} dragAmount : ${dragAmount.x.dp}"
+                            )
+
+                        }
+                    }
+            )
+
             Box(
                 modifier = Modifier
                     .width(videoState.width)
                     .offset(x = videoState.start)
                     .fillMaxHeight()
-                    .background(Color.Unspecified)
+                    .background(Color.White.copy(alpha = 0.4f))
             ) {
-
-                val dragBarWidth = 10.dp
 
                 //Start Bar
                 Box(
@@ -160,6 +207,7 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
                             detectDragGestures { change, dragAmount ->
                                 change.consume()
                                 var newStart = videoState.start + dragAmount.x.toDp()
+
                                 val endBar =
                                     (videoState.end - (dragBarWidth.value * 2).dp)
 
@@ -172,62 +220,22 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
 
                                 val newTime =
                                     (videoState.totalTime / maxWidth.value * videoState.start.value)
-                                        .toInt()
+                                        .toLong()
                                         .coerceIn(0, videoState.totalTime - 1)
 
-                                if (abs(videoState.startTime - newTime) > dragSpace) {
-                                    videoState.startTime = newTime
-                                    videoState.selectedTime = newTime
-                                }
+//                                if (abs(videoState.startTime - newTime) > dragSpace) {
+                                videoState.startTime = newTime
+                                videoState.selectedTime = newTime
+//                                }
 
                                 Log.d(
                                     "CHANGE",
-                                    "start ${videoState.start} end -> ${videoState.end} ${videoState.startTime}"
+                                    "start ${videoState.start} end -> ${videoState.end} startTime  ${videoState.startTime} totalTime ${videoState.totalTime} width $maxWidth"
                                 )
 
                             }
                         }
                 )
-
-                //Playing Bar
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxHeight()
-//                        .size(dragBarWidth, 0.dp)
-//                        .background(Color(0XFF0FD3D8))
-//                        .border(2.dp, Color.White, RoundedCornerShape(12.dp))
-//                        .align(Alignment.CenterStart)
-//                        .pointerInput(Unit) {
-//                            detectDragGestures { change, dragAmount ->
-//                                change.consume()
-//                                var newStart = videoState.start + dragAmount.x.toDp()
-//                                val endBar =
-//                                    (videoState.end - (dragBarWidth.value * 2).dp)
-//
-//                                if (newStart < 0.dp) newStart = 0.dp
-//                                else if (newStart >= endBar)
-//                                    newStart = endBar
-//                                videoState.width =
-//                                    videoState.end - videoState.start
-//
-//                                val newTime =
-//                                    (videoState.totalTime / maxWidth.value * newStart.value)
-//                                        .toInt()
-//                                        .coerceIn(0, videoState.totalTime - 1)
-//
-//                                if (abs(videoState.startTime - newTime) > dragSpace) {
-//                                    videoState.startTime = newTime
-//                                    videoState.selectedTime = newTime
-//                                }
-//
-//                                Log.d(
-//                                    "CHANGE",
-//                                    "start ${videoState.start} end -> ${videoState.end} ${videoState.startTime}"
-//                                )
-//
-//                            }
-//                        }
-//                )
 
                 //End Bar
                 Box(
@@ -255,14 +263,11 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
 
                                 val newTime =
                                     (videoState.totalTime / maxWidth.value * videoState.end.value)
-                                        .toInt()
+                                        .toLong()
                                         .coerceIn(0, videoState.totalTime - 1)
 
-                                if (abs(videoState.endTime - newTime) > dragSpace) {
-//                                    viewModel.updateSelectedEndTime(newTime)
-                                    videoState.endTime = newTime
-                                    videoState.selectedTime = newTime
-                                }
+                                videoState.endTime = newTime
+                                videoState.selectedTime = newTime
 
                                 Log.d(
                                     "CHANGE",
@@ -284,12 +289,19 @@ fun VideoPlayer(state: VideoState) {
     val context = LocalContext.current
     val playbackSpeed = 1.0f
 
+    val playingCoroutineJob = remember { mutableStateOf<Job?>(null) }
+
+    // 이벤트에 따라 코루틴 시작
+    val startPlay = remember { mutableStateOf(false) }
+
     if (state.uri == null) return
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context, DefaultRenderersFactory(context).setEnableDecoderFallback(true))
             .setLoadControl(viewModel.getLoadControl())
-            .setSeekParameters(SeekParameters.NEXT_SYNC)
+            .setSeekParameters(SeekParameters.CLOSEST_SYNC)
+            .setSeekBackIncrementMs(10)
+            .setSeekForwardIncrementMs(10)
             .build()
             .apply {
                 playWhenReady = false
@@ -318,8 +330,7 @@ fun VideoPlayer(state: VideoState) {
         ) {
 
             var size by remember { mutableStateOf(Size.Zero) }
-            val (player, selector) = createRefs()
-            val guideline = createGuidelineFromBottom(100.dp)
+            val player = createRef()
 
             Box(
                 modifier = Modifier
@@ -369,8 +380,13 @@ fun VideoPlayer(state: VideoState) {
                                 .width(48.dp)
                                 .height(48.dp)
                                 .clickable {
-                                    if (exoPlayer.isPlaying) exoPlayer.pause()
-                                    else if (!exoPlayer.isPlaying) exoPlayer.play()
+                                    if (exoPlayer.isPlaying) {
+                                        exoPlayer.pause()
+                                        startPlay.value = false
+                                    } else if (!exoPlayer.isPlaying) {
+                                        exoPlayer.play()
+                                        startPlay.value = true
+                                    }
                                 },
                             contentDescription = null
                         )
@@ -383,7 +399,6 @@ fun VideoPlayer(state: VideoState) {
                             .height(100.dp),
                         videoState = state
                     )
-
 
                 }
 
@@ -402,12 +417,52 @@ fun VideoPlayer(state: VideoState) {
     }
 
 
-    LaunchedEffect(viewModel.videoStateList[viewModel.selectedVideoIdx.intValue].uri) {
+    LaunchedEffect(
+        key1 = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue].uri,
+    ) {
 
         state.uri?.let {
             Log.d("VIDEO", "CHANGE INTO $it")
             exoPlayer.setMediaSource(viewModel.getMediaSource(it))
             exoPlayer.prepare()
+        }
+
+    }
+
+
+    LaunchedEffect(
+        key1 = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue].filteredUri
+    ) {
+
+        state.filteredUri?.let {
+            Log.d("VIDEO", "CHANGE FILTER INTO $it")
+            exoPlayer.setMediaSource(viewModel.getMediaSource(it))
+            exoPlayer.prepare()
+        }
+
+    }
+
+    LaunchedEffect(startPlay.value) {
+        if (startPlay.value) {
+            // 코루틴 시작
+            playingCoroutineJob.value = launch {
+                while (isActive) {
+                    if (state.playingTime >= state.endTime) {
+                        Log.d("Playing", "1111 start : ${state.startTime} end : ${state.endTime}")
+                        state.playingTime = state.startTime
+                        exoPlayer.seekTo(state.startTime)
+                    } else {
+                        Log.d(
+                            "Playing",
+                            "2222 start : ${state.startTime} end : ${state.endTime} ${exoPlayer.currentPosition}"
+                        )
+                        state.playingTime = exoPlayer.currentPosition
+                    }
+                    delay(10) // 일정 간격마다 반복
+                }
+            }
+        } else {
+            playingCoroutineJob.value?.cancel()
         }
     }
 
@@ -526,7 +581,7 @@ fun SelectVideoView(
                 .clickable {
                     onClick()
                 }
-    else {
+        else {
             modifier
                 .clip(RoundedCornerShape(12.dp))
                 .background(Color.White.copy(alpha = 0.3f))
@@ -553,7 +608,7 @@ fun SelectVideoView(
         else {
 
             Text(
-                text = "SELECT VIDEO",
+                text = "SELECT\nVIDEO",
                 color = Color.Black,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,

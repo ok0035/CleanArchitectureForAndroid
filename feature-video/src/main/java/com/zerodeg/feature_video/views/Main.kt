@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.zerodeg.domain.video_editor.VideoState
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
 import kotlinx.coroutines.NonDisposableHandle.parent
@@ -56,6 +58,7 @@ fun MainScreen() {
 
     val context = LocalContext.current
 
+    val navController = rememberNavController()
 
     val videoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -69,7 +72,7 @@ fun MainScreen() {
             viewModel.encodeVideoWithKeyframeInterval(path, newPath) { encodedUri ->
                 viewModel.updateVideoTotalTime(path) { totalTime ->
                     viewModel.videoStateList[0].uri = encodedUri
-                    viewModel.videoStateList[0].totalTime = totalTime.toInt()
+                    viewModel.videoStateList[0].totalTime = totalTime
                     viewModel.loadBitmaps(uri,
                         onSuccess = { bitmaps ->
                             viewModel.videoStateList[0].bitmapList = bitmaps
@@ -94,7 +97,7 @@ fun MainScreen() {
             viewModel.encodeVideoWithKeyframeInterval(path, newPath) { encodedUri ->
                 viewModel.updateVideoTotalTime(path) { totalTime ->
                     viewModel.videoStateList[1].uri = encodedUri
-                    viewModel.videoStateList[1].totalTime = totalTime.toInt()
+                    viewModel.videoStateList[1].totalTime = totalTime
                     viewModel.loadBitmaps(uri,
                         onSuccess = { bitmaps ->
                             viewModel.videoStateList[1].bitmapList = bitmaps
@@ -119,7 +122,7 @@ fun MainScreen() {
             viewModel.encodeVideoWithKeyframeInterval(path, newPath) { encodedUri ->
                 viewModel.updateVideoTotalTime(path) { totalTime ->
                     viewModel.videoStateList[2].uri = encodedUri
-                    viewModel.videoStateList[2].totalTime = totalTime.toInt()
+                    viewModel.videoStateList[2].totalTime = totalTime
                     viewModel.selectedVideoIdx.intValue = 2
                     val retriever = MediaMetadataRetriever()
                     retriever.setDataSource(context, uri)
@@ -157,29 +160,12 @@ fun MainScreen() {
                 }
         ) {
 
-//                GradientText()
-//                VideoPlayer(state = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue])
             when (viewModel.selectedVideoIdx.intValue) {
-                0 -> {
-//                Log.d("VideoPlayer", "state -> ${viewModel.videoState1.uri?.path}")
-                    VideoPlayer(viewModel.videoStateList[0])
-                }
-
-                1 -> {
-//                Log.d("VideoPlayer", "state2 -> ${viewModel.videoState2.uri?.path}")
-                    VideoPlayer(viewModel.videoStateList[1])
-                }
-
-                2 -> {
-//                Log.d("VideoPlayer", "state3 -> ${viewModel.videoState3.uri?.path}")
-                    VideoPlayer(viewModel.videoStateList[2])
-                }
-
+                0 -> VideoPlayer(viewModel.videoStateList[0])
+                1 -> VideoPlayer(viewModel.videoStateList[1])
+                2 -> VideoPlayer(viewModel.videoStateList[2])
             }
-
-
         }
-
 
         ConstraintLayout(
             modifier = Modifier
@@ -377,4 +363,9 @@ fun MainScreen() {
 //            exoPlayer.release()
         }
     }
+}
+
+@Composable
+fun VideoResultScreen(navController: NavController, uri: Uri) {
+
 }

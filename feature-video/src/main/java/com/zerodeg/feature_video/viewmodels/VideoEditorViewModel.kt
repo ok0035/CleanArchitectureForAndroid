@@ -142,9 +142,9 @@ class VideoEditorViewModel @Inject constructor(
                                 start = 0.dp
                                 end = -(1.dp)
                                 width = -(1.dp)
-                                totalTime = it.toInt()
+                                totalTime = it
                                 startTime = 0
-                                endTime = it.toInt()
+                                endTime = it
                                 selectedTime = 0
                                 bitmapList = bitmaps
                             }

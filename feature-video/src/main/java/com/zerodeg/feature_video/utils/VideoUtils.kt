@@ -15,7 +15,6 @@ import com.arthenica.ffmpegkit.FFmpegSession
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.arthenica.ffmpegkit.SessionState
-import com.google.ads.interactivemedia.v3.internal.it
 import com.zerodeg.domain.video_editor.VideoState
 import kotlinx.coroutines.delay
 import java.io.File
@@ -23,6 +22,12 @@ import java.io.FileOutputStream
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+
+enum class VideoFilterState(val ffmpegCmd: String) {
+    EDGE_BLUR("-vf transpose=1"),
+    GRAY_SCALE("-vf gblur=radius=20:sigma=5"),
+    BRIGHTNESS_CONTRAST("-vf eq=brightness=0.06:contrast=2.0")
+}
 
 @Singleton
 class VideoUtils @Inject constructor(
@@ -157,6 +162,10 @@ class VideoUtils @Inject constructor(
         return file.absolutePath
     }
 
+    fun getRandomOutputPath(originFileName: String) : String {
+        return getTempFilePath(originFileName.split(".").last())
+    }
+
     fun getMediaSource(uri: Uri): ProgressiveMediaSource {
 
         return ProgressiveMediaSource.Factory(getDataSourceFactory())
@@ -273,6 +282,41 @@ class VideoUtils @Inject constructor(
             outputStream.write(data)
         }
         return tempFile
+    }
+
+    fun filter(
+        inputPath: String,
+        filterState: VideoFilterState,
+        onError: () -> Unit,
+        onSuccess: (uri: Uri) -> Unit
+    ) {
+        var filterCmd = ""
+        when (filterState) {
+            VideoFilterState.EDGE_BLUR -> {
+                filterCmd = filterState.ffmpegCmd
+            }
+
+            VideoFilterState.GRAY_SCALE -> {
+                filterCmd = filterState.ffmpegCmd
+
+            }
+
+            VideoFilterState.BRIGHTNESS_CONTRAST -> {
+                filterCmd = filterState.ffmpegCmd
+
+            }
+            else -> filterCmd = VideoFilterState.EDGE_BLUR.ffmpegCmd
+        }
+
+        val ffmpegCmd = "-i $inputPath \"$filterCmd\" ${getRandomOutputPath(inputPath)}"
+        FFmpegKit.executeAsync(ffmpegCmd) { session ->
+            if(session.returnCode.isValueSuccess) {
+                onSuccess(Uri.parse(session.output))
+            } else {
+                onError()
+            }
+        }
+
     }
 
     // 내부 저장소의 임시 파일 모두 삭제
