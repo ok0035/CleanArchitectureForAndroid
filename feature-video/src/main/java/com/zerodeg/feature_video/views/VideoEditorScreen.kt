@@ -68,6 +68,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import androidx.navigation.NavController
 import com.zerodeg.domain.video_editor.VideoState
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
 import kotlinx.coroutines.Job
@@ -283,7 +284,7 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
 
 @Composable
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-fun VideoPlayer(state: VideoState) {
+fun VideoPlayer(state: VideoState, navController: NavController) {
 
     val viewModel: VideoEditorViewModel = hiltViewModel()
     val context = LocalContext.current

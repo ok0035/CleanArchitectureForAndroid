@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.zerodeg.app_video_editor.ui.theme.CleanArchitectureTheme
+import com.zerodeg.feature_video.views.Main
 import com.zerodeg.feature_video.views.MainScreen
 import com.zerodeg.util.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -22,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CleanArchitectureTheme(darkTheme = true) {
-                MainScreen()
+                Main()
             }
         }
         setPermission()

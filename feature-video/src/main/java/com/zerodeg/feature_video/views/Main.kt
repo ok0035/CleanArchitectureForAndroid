@@ -45,20 +45,29 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zerodeg.domain.video_editor.VideoState
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
 import kotlinx.coroutines.NonDisposableHandle.parent
 
+
+@Composable
+fun Main() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "main") {
+        composable("main") { MainScreen(navController) }
+        composable("video_result") { VideoResultScreen(navController) }
+    }
+}
+
 @Preview
 @Composable
-fun MainScreen() {
+fun MainScreen(navController: NavController) {
 
     val viewModel: VideoEditorViewModel = hiltViewModel()
-
     val context = LocalContext.current
-
-    val navController = rememberNavController()
 
     val videoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -82,7 +91,6 @@ fun MainScreen() {
                     viewModel.selectedVideoIdx.intValue = 0
                 }
             }
-
         }
     }
 
@@ -161,9 +169,9 @@ fun MainScreen() {
         ) {
 
             when (viewModel.selectedVideoIdx.intValue) {
-                0 -> VideoPlayer(viewModel.videoStateList[0])
-                1 -> VideoPlayer(viewModel.videoStateList[1])
-                2 -> VideoPlayer(viewModel.videoStateList[2])
+                0 -> VideoPlayer(viewModel.videoStateList[0], navController = navController)
+                1 -> VideoPlayer(viewModel.videoStateList[1], navController = navController)
+                2 -> VideoPlayer(viewModel.videoStateList[2], navController = navController)
             }
         }
 
@@ -366,6 +374,6 @@ fun MainScreen() {
 }
 
 @Composable
-fun VideoResultScreen(navController: NavController, uri: Uri) {
+fun VideoResultScreen(navController: NavController) {
 
 }
