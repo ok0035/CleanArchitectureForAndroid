@@ -2,25 +2,16 @@ package com.zerodeg.feature_video.views
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.provider.MediaStore.PickerMediaColumns
 import android.util.Log
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,15 +19,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,9 +33,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.zerodeg.domain.video_editor.VideoState
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
-import kotlinx.coroutines.NonDisposableHandle.parent
 
 
 @Composable
@@ -169,9 +152,9 @@ fun MainScreen(navController: NavController) {
         ) {
 
             when (viewModel.selectedVideoIdx.intValue) {
-                0 -> VideoPlayer(viewModel.videoStateList[0], navController = navController)
-                1 -> VideoPlayer(viewModel.videoStateList[1], navController = navController)
-                2 -> VideoPlayer(viewModel.videoStateList[2], navController = navController)
+                0 -> VideoEditor(viewModel.videoStateList[0], navController = navController)
+                1 -> VideoEditor(viewModel.videoStateList[1], navController = navController)
+                2 -> VideoEditor(viewModel.videoStateList[2], navController = navController)
             }
         }
 
@@ -179,12 +162,11 @@ fun MainScreen(navController: NavController) {
             modifier = Modifier
                 .background(Color.Black)
                 .constrainAs(selectButtons) {
-                    top.linkTo(editView.bottom)
                     start.linkTo(parent.start, margin = 40.dp)
                     end.linkTo(parent.end, margin = 40.dp)
-                    bottom.linkTo(editMenuRef.top, margin = 20.dp)
+                    bottom.linkTo(editMenuRef.top, margin = 60.dp)
                     width = Dimension.fillToConstraints
-                    height = Dimension.wrapContent
+                    height = Dimension.fillToConstraints
                 }
         ) {
 
@@ -197,12 +179,13 @@ fun MainScreen(navController: NavController) {
                     bottom.linkTo(parent.bottom)
                     top.linkTo(parent.top)
                     width = Dimension.fillToConstraints
-                    height = Dimension.value(200.dp)
+                    height = Dimension.value(100.dp)
                 }, viewModel.videoStateList[0].bitmapList?.get(1)?.asImageBitmap(),
                 isSelect = viewModel.selectedVideoIdx.intValue == 0,
                 onClick = {
                     if (viewModel.videoStateList[0].uri == null) {
                         videoPickerLauncher.launch("video/*")
+//                        navController.navigate("video_result")
                     } else {
                         viewModel.selectedVideoIdx.intValue = 0
                     }
@@ -216,7 +199,7 @@ fun MainScreen(navController: NavController) {
                     bottom.linkTo(parent.bottom)
                     top.linkTo(parent.top)
                     width = Dimension.fillToConstraints
-                    height = Dimension.value(200.dp)
+                    height = Dimension.value(100.dp)
                 }, viewModel.videoStateList[1].bitmapList?.get(1)?.asImageBitmap(),
                 isSelect = viewModel.selectedVideoIdx.intValue == 1,
                 onClick = {
@@ -235,7 +218,7 @@ fun MainScreen(navController: NavController) {
                     bottom.linkTo(parent.bottom)
                     top.linkTo(parent.top)
                     width = Dimension.fillToConstraints
-                    height = Dimension.value(200.dp)
+                    height = Dimension.value(100.dp)
                 }, viewModel.videoStateList[2].bitmapList?.get(1)?.asImageBitmap(),
                 isSelect = viewModel.selectedVideoIdx.intValue == 2,
                 onClick = {
@@ -251,15 +234,13 @@ fun MainScreen(navController: NavController) {
 
         ConstraintLayout(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
                 .background(Color.Black)
                 .constrainAs(editMenuRef) {
                     start.linkTo(parent.start, margin = 40.dp)
                     end.linkTo(parent.end, margin = 40.dp)
                     bottom.linkTo(parent.bottom, margin = 20.dp)
                     width = Dimension.fillToConstraints
-                    height = Dimension.wrapContent
+                    height = Dimension.value(50.dp)
                 }
         ) {
 
@@ -292,32 +273,32 @@ fun MainScreen(navController: NavController) {
                     .background(Color.Black)
                     .constrainAs(merge) {
                         start.linkTo(cut.end)
-                        end.linkTo(text.start)
-                        bottom.linkTo(parent.bottom)
-                        width = Dimension.fillToConstraints
-                    }
-                    .clickable {
-
-                    }
-            )
-
-            Text(
-                text = "TEXT",
-                color = Color.White,
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .background(Color.Black)
-                    .constrainAs(text) {
-                        start.linkTo(merge.end)
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                         width = Dimension.fillToConstraints
                     }
                     .clickable {
 
-                    },
+                    }
             )
+
+//            Text(
+//                text = "TEXT",
+//                color = Color.White,
+//                fontSize = 16.sp,
+//                textAlign = TextAlign.Center,
+//                modifier = Modifier
+//                    .background(Color.Black)
+//                    .constrainAs(text) {
+//                        start.linkTo(merge.end)
+//                        end.linkTo(parent.end)
+//                        bottom.linkTo(parent.bottom)
+//                        width = Dimension.fillToConstraints
+//                    }
+//                    .clickable {
+//
+//                    },
+//            )
 
         }
 
@@ -365,12 +346,12 @@ fun MainScreen(navController: NavController) {
 
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.deleteCacheData()
-//            exoPlayer.release()
-        }
-    }
+//    DisposableEffect(Unit) {
+//        onDispose {
+//            viewModel.deleteCacheData()
+////            exoPlayer.release()
+//        }
+//    }
 }
 
 @Composable

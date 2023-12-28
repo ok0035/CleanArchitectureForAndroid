@@ -15,6 +15,8 @@ import com.arthenica.ffmpegkit.FFmpegSession
 import com.arthenica.ffmpegkit.FFprobeKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.arthenica.ffmpegkit.SessionState
+import com.google.ads.interactivemedia.v3.internal.it
+import com.google.common.primitives.UnsignedBytes.toInt
 import com.zerodeg.domain.video_editor.VideoState
 import kotlinx.coroutines.delay
 import java.io.File
@@ -24,8 +26,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 enum class VideoFilterState(val ffmpegCmd: String) {
-    EDGE_BLUR("-vf transpose=1"),
-    GRAY_SCALE("-vf gblur=radius=20:sigma=5"),
+    RESET(""),
+    EDGE_BLUR("-vf \"gblur=sigma=3\""),
+    GRAY_SCALE("-vf \"colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3\""),
     BRIGHTNESS_CONTRAST("-vf eq=brightness=0.06:contrast=2.0")
 }
 
@@ -162,7 +165,7 @@ class VideoUtils @Inject constructor(
         return file.absolutePath
     }
 
-    fun getRandomOutputPath(originFileName: String) : String {
+    fun getRandomOutputPath(originFileName: String): String {
         return getTempFilePath(originFileName.split(".").last())
     }
 
@@ -305,18 +308,50 @@ class VideoUtils @Inject constructor(
                 filterCmd = filterState.ffmpegCmd
 
             }
+
             else -> filterCmd = VideoFilterState.EDGE_BLUR.ffmpegCmd
         }
 
-        val ffmpegCmd = "-i $inputPath \"$filterCmd\" ${getRandomOutputPath(inputPath)}"
+        val outputPath = getRandomOutputPath(inputPath)
+        Log.d("VideoUtils", "Output path -> $outputPath")
+        val ffmpegCmd = "-i $inputPath $filterCmd $outputPath"
         FFmpegKit.executeAsync(ffmpegCmd) { session ->
-            if(session.returnCode.isValueSuccess) {
-                onSuccess(Uri.parse(session.output))
+            if (session.returnCode.isValueSuccess) {
+                Log.d("VideoUtils", "Output path -> $outputPath")
+                onSuccess(Uri.parse(outputPath))
             } else {
                 onError()
             }
         }
 
+    }
+
+    fun syncResolution(videoList: List<VideoState>) {
+
+        videoList.forEach {
+            it.uri?.let { uri ->
+                val retriever = MediaMetadataRetriever().apply {
+                    setDataSource(context, uri)
+                }
+                val width =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                        ?.toInt() ?: 0
+                val height =
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                        ?.toInt() ?: 0
+
+
+
+            }
+        }
+//        val ffmpegCmd = "-i $inputPath \"$filterCmd\" ${getRandomOutputPath(inputPath)}"
+//        FFmpegKit.executeAsync(ffmpegCmd) { session ->
+//            if (session.returnCode.isValueSuccess) {
+//                onSuccess(Uri.parse(session.output))
+//            } else {
+//                onError()
+//            }
+//        }
     }
 
     // 내부 저장소의 임시 파일 모두 삭제

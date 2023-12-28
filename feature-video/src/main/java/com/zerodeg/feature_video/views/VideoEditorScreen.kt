@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,8 +72,10 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.zerodeg.domain.video_editor.VideoState
+import com.zerodeg.feature_video.utils.VideoFilterState
 import com.zerodeg.feature_video.viewmodels.VideoEditorViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonDisposableHandle.parent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -83,7 +87,6 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
 
     val dragSpace = 200
     var maxWidth by remember { mutableStateOf(0.dp) }
-    var isTrimming by remember { mutableStateOf(false) }
     val dragBarWidth = 10.dp
 
     LaunchedEffect(key1 = maxWidth, key2 = videoState.totalTime) {
@@ -161,8 +164,7 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
                             Log.d("PlayingBar", "PlayingPos -> $playingPos")
 
                             var newPlayingPos = playingPos + dragAmount.x.toDp()
-                            val endBar =
-                                (videoState.end - (dragBarWidth.value * 2).dp)
+                            val endBar = (videoState.end)
 
                             if (newPlayingPos < videoState.start) newPlayingPos =
                                 videoState.start
@@ -174,10 +176,8 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
                                     .toLong()
                                     .coerceIn(0, videoState.totalTime - 1)
 
-//                            if (abs(videoState.playingTime - newTime) > dragSpace) {
                             videoState.playingTime = newTime
                             videoState.selectedTime = newTime
-//                            }
 
                             Log.d(
                                 "CHANGE",
@@ -284,7 +284,7 @@ fun VideoFrameSelector(modifier: Modifier, videoState: VideoState) {
 
 @Composable
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-fun VideoPlayer(state: VideoState, navController: NavController) {
+fun VideoEditor(state: VideoState, navController: NavController) {
 
     val viewModel: VideoEditorViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -352,6 +352,7 @@ fun VideoPlayer(state: VideoState, navController: NavController) {
             ) {
 
                 Column(
+                    modifier = Modifier.wrapContentHeight(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
@@ -401,6 +402,13 @@ fun VideoPlayer(state: VideoState, navController: NavController) {
                         videoState = state
                     )
 
+                    VideoFilter(
+                        modifier = Modifier
+                            .padding(start = 40.dp, end = 40.dp, top = 20.dp)
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    )
+
                 }
 
 //            DraggableBox(
@@ -424,6 +432,7 @@ fun VideoPlayer(state: VideoState, navController: NavController) {
 
         state.uri?.let {
             Log.d("VIDEO", "CHANGE INTO $it")
+            if (exoPlayer.isPlaying) exoPlayer.pause()
             exoPlayer.setMediaSource(viewModel.getMediaSource(it))
             exoPlayer.prepare()
         }
@@ -435,12 +444,10 @@ fun VideoPlayer(state: VideoState, navController: NavController) {
         key1 = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue].filteredUri
     ) {
 
-        state.filteredUri?.let {
-            Log.d("VIDEO", "CHANGE FILTER INTO $it")
-            exoPlayer.setMediaSource(viewModel.getMediaSource(it))
-            exoPlayer.prepare()
-        }
-
+        val uri = state.filteredUri ?: state.uri ?: return@LaunchedEffect
+        Log.d("VIDEO", "CHANGE FILTER INTO $uri")
+        exoPlayer.setMediaSource(viewModel.getMediaSource(uri))
+        exoPlayer.prepare()
     }
 
     LaunchedEffect(startPlay.value) {
@@ -619,6 +626,294 @@ fun SelectVideoView(
         }
 
     }
+}
+
+@Composable
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+fun VideoPlayer(state: VideoState, navController: NavController) {
+
+    val viewModel: VideoEditorViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val playbackSpeed = 1.0f
+
+    val playingCoroutineJob = remember { mutableStateOf<Job?>(null) }
+
+    // 이벤트에 따라 코루틴 시작
+    val startPlay = remember { mutableStateOf(false) }
+
+    if (state.uri == null) return
+
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context, DefaultRenderersFactory(context).setEnableDecoderFallback(true))
+            .setLoadControl(viewModel.getLoadControl())
+            .setSeekParameters(SeekParameters.CLOSEST_SYNC)
+            .setSeekBackIncrementMs(10)
+            .setSeekForwardIncrementMs(10)
+            .build()
+            .apply {
+                playWhenReady = false
+                videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                repeatMode = Player.REPEAT_MODE_ONE
+                playbackParameters = PlaybackParameters(playbackSpeed, 1.0f)
+            }
+    }
+
+    val playerView = remember {
+        PlayerView(context).apply {
+            hideController()
+            useController = false
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT
+            player = exoPlayer
+            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+        }
+    }
+
+    state.uri?.let {
+
+        ConstraintLayout(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Unspecified)
+        ) {
+
+            var size by remember { mutableStateOf(Size.Zero) }
+            val player = createRef()
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp)) // 여기에 clip 적용
+                    .constrainAs(player) {
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        bottom.linkTo(parent.bottom, 40.dp)
+                        width = Dimension.fillToConstraints
+                        height = Dimension.fillToConstraints
+                    }
+                    .background(Color.Unspecified)
+                    .onSizeChanged { newSize ->
+                        size = newSize.toSize()
+                        Log.d("size", "size -> $size")
+                    },
+            ) {
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+
+                    AndroidView(
+                        modifier = Modifier
+                            .fillMaxHeight(0.6f)
+                            .padding(top = 20.dp, bottom = 20.dp)
+                            .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.Unspecified)
+                            .wrapContentWidth(),
+                        factory = {
+                            playerView
+                        })
+
+                    Box(contentAlignment = Alignment.Center) {
+
+                        Box(
+                            Modifier
+                                .background(Color.White)
+                                .width(45.dp)
+                                .height(45.dp)
+                        )
+                        Image(
+                            painter = painterResource(id = com.tenfingers.core_res.R.drawable.icon_play_pause_48),
+                            modifier = Modifier
+                                .width(48.dp)
+                                .height(48.dp)
+                                .clickable {
+                                    if (exoPlayer.isPlaying) {
+                                        exoPlayer.pause()
+                                        startPlay.value = false
+                                    } else if (!exoPlayer.isPlaying) {
+                                        exoPlayer.play()
+                                        startPlay.value = true
+                                    }
+                                },
+                            contentDescription = null
+                        )
+                    }
+
+                    VideoFrameSelector(
+                        modifier = Modifier
+                            .padding(start = 40.dp, end = 40.dp, top = 20.dp)
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        videoState = state
+                    )
+
+                }
+
+            }
+
+        }
+    }
+
+    LaunchedEffect(state.selectedTime) {
+        val selectedTime = state.selectedTime.toLong()
+        playerView.player?.seekTo(selectedTime)
+        Log.d("VIDEO", "SEEK TO $selectedTime")
+    }
+
+
+    LaunchedEffect(
+        key1 = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue].uri,
+    ) {
+
+        state.uri?.let {
+            Log.d("VIDEO", "CHANGE INTO $it")
+            exoPlayer.setMediaSource(viewModel.getMediaSource(it))
+            exoPlayer.prepare()
+        }
+
+    }
+
+
+    LaunchedEffect(
+        key1 = viewModel.videoStateList[viewModel.selectedVideoIdx.intValue].filteredUri
+    ) {
+
+        state.filteredUri?.let {
+            Log.d("VIDEO", "CHANGE FILTER INTO $it")
+            exoPlayer.setMediaSource(viewModel.getMediaSource(it))
+            exoPlayer.prepare()
+        }
+
+    }
+
+    LaunchedEffect(startPlay.value) {
+        if (startPlay.value) {
+            // 코루틴 시작
+            playingCoroutineJob.value = launch {
+                while (isActive) {
+                    if (state.playingTime >= state.endTime) {
+                        Log.d("Playing", "1111 start : ${state.startTime} end : ${state.endTime}")
+                        state.playingTime = state.startTime
+                        exoPlayer.seekTo(state.startTime)
+                    } else {
+                        Log.d(
+                            "Playing",
+                            "start : ${state.startTime} end : ${state.endTime} ${exoPlayer.currentPosition}"
+                        )
+                        state.playingTime = exoPlayer.currentPosition
+                    }
+                    delay(10) // 일정 간격마다 반복
+                }
+            }
+        } else {
+            playingCoroutineJob.value?.cancel()
+        }
+    }
+
+}
+
+@Composable
+fun VideoFilter(
+    modifier: Modifier
+) {
+    val viewModel: VideoEditorViewModel = hiltViewModel()
+
+    LazyRow(
+        modifier = modifier
+    ) {
+
+        items(viewModel.filterStateList) {
+            when(it) {
+                VideoFilterState.RESET -> {
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 8.dp, end = 8.dp)
+                            .clickable {
+                                Log.d("VideoEditorViewModel", "onClick gray filter2")
+                                viewModel.resetFilter()
+                            },
+                        text = "RESET",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight(600)
+                    )
+
+                }
+
+                VideoFilterState.GRAY_SCALE -> {
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 8.dp, end = 8.dp)
+                            .clickable {
+                                Log.d("VideoEditorViewModel", "onClick gray filter2")
+                                viewModel.filter(
+                                    VideoFilterState.GRAY_SCALE,
+                                    onSuccess = {
+
+                                    }, onError = {
+
+                                    }
+                                )
+                            },
+                        text = "GRAY",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight(600)
+                    )
+                }
+
+                VideoFilterState.EDGE_BLUR -> {
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 8.dp, end = 8.dp)
+                            .clickable {
+                                Log.d("VideoEditorViewModel", "onClick gray filter2")
+                                viewModel.filter(
+                                    VideoFilterState.EDGE_BLUR,
+                                    onSuccess = {
+
+                                    }, onError = {
+
+                                    }
+                                )
+                            },
+                        text = "BLUR",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight(600)
+                    )
+                }
+
+                VideoFilterState.BRIGHTNESS_CONTRAST -> {
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 8.dp, end = 8.dp)
+                            .clickable {
+                                Log.d("VideoEditorViewModel", "onClick gray filter2")
+                                viewModel.filter(
+                                    VideoFilterState.BRIGHTNESS_CONTRAST,
+                                    onSuccess = {
+
+                                    }, onError = {
+
+                                    }
+                                )
+                            },
+                        text = "CONTRAST",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight(600)
+                    )
+                }
+            }
+        }
+
+    }
+
 }
 
 @Composable

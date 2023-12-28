@@ -1,6 +1,7 @@
 package com.zerodeg.feature_video.viewmodels
 
 import android.graphics.Bitmap
+import android.hardware.camera2.params.BlackLevelPattern
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.util.Log
@@ -8,15 +9,12 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arthenica.ffmpegkit.FFmpegKit
-import com.arthenica.ffmpegkit.FFprobeKit
-import com.google.ads.interactivemedia.v3.internal.it
 import com.zerodeg.domain.video_editor.VideoState
+import com.zerodeg.feature_video.utils.VideoFilterState
 import com.zerodeg.feature_video.utils.VideoUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +33,13 @@ class VideoEditorViewModel @Inject constructor(
     var isLoading by mutableStateOf<Boolean>(false)
     var loadingMsg: MutableState<String> = mutableStateOf("비디오를 불러오고 있어요.")
     val selectedVideoIdx = mutableIntStateOf(-1)
+
+    val filterStateList = listOf<VideoFilterState>(
+        VideoFilterState.RESET,
+        VideoFilterState.GRAY_SCALE,
+        VideoFilterState.EDGE_BLUR,
+        VideoFilterState.BRIGHTNESS_CONTRAST
+    )
 
     fun getMediaSource(uri: Uri) = videoUtils.getMediaSource(uri)
 
@@ -179,6 +184,33 @@ class VideoEditorViewModel @Inject constructor(
     }
 
     fun deleteCacheData() = viewModelScope.launch { videoUtils.deleteTempFiles() }
+
+    fun resetFilter() = viewModelScope.launch {
+        videoStateList[selectedVideoIdx.intValue].filteredUri = null
+    }
+
+    fun filter(state: VideoFilterState ,onSuccess: (uri: Uri) -> Unit, onError: () -> Unit) {
+        val selectedUri = videoStateList[selectedVideoIdx.intValue].uri
+
+        selectedUri?.path?.let { path ->
+            Log.d("VideoEditorViewModel", "onClick gray filter")
+            loadingMsg.value = "영상에 옷을 입히고 있어요 !"
+            isLoading = true
+            videoUtils.filter(
+                inputPath = path,
+                filterState = state,
+                onError = {
+                    onError()
+                    isLoading = false
+                },
+            ) {
+                onSuccess(it)
+                videoStateList[selectedVideoIdx.intValue].filteredUri = it
+                isLoading = false
+            }
+        }
+
+    }
 
     fun getLoadControl() = videoUtils.getLoadControl(
         0, 0, 0, 0, 0, true
